@@ -7,21 +7,20 @@ https://dbdiagram.io/d/DIGGS-SQL-Structure-668dcbd19939893dae7ebb48 is the curre
 
 ```mermaid
 classDiagram
+    %% Product side
     class GeoData {
         <<interface>>
     }
 
-    class SQL {
-    }
-    class DIGGS {
-    }
-    class Excel {
-    }
+    class SQL
+    class DIGGS
+    class Excel
 
     GeoData <|.. SQL
     GeoData <|.. DIGGS
     GeoData <|.. Excel
 
+    %% Creator side
     class GeoData_Factory {
         <<interface>>
         +createGeoData()
@@ -43,7 +42,14 @@ classDiagram
     GeoData_Factory <|.. DIGGS_Factory
     GeoData_Factory <|.. Excel_Factory
 
+    %% Associations (from creators to products)
     SQL_Factory --> SQL : creates
     DIGGS_Factory --> DIGGS : creates
     Excel_Factory --> Excel : creates
+
+    %% Layout hints (pseudo-direction by adding invisible classes and links)
+    class DummyLeft
+    class DummyRight
+    DummyLeft --> GeoData
+    Excel_Factory --> DummyRight
 ```
