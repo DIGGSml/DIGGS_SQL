@@ -5,6 +5,7 @@ This is an Ongoing project with the Geo Institute to build an open source databa
 
 https://dbdiagram.io/d/DIGGS-SQL-Structure-668dcbd19939893dae7ebb48 is the current visual representation of the SQL structure being used. 
 
+```mermaid
 classDiagram
     class GeoData {
         <<interface>>
@@ -45,3 +46,4 @@ classDiagram
     SQL_Factory --> SQL : creates
     DIGGS_Factory --> DIGGS : creates
     Excel_Factory --> Excel : creates
+```
