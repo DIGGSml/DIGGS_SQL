@@ -5,10 +5,3 @@ This is an Ongoing project with the Geo Institute to build an open source databa
 
 https://dbdiagram.io/d/DIGGS-SQL-Structure-668dcbd19939893dae7ebb48 is the current visual representation of the SQL structure being used. 
 
-```mermaid
-graph TD;
-    A-->B;
-    A-->C;
-    B-->D;
-    C-->D;
-```
