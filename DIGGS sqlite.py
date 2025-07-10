@@ -1,14 +1,24 @@
-PRAGMA foreign_keys = ON;
+#currently code creates a new database, revisions will need to be made to append efficiently to an existing database
+import sqlite3
 
+database_name = "GeoDataBase" #this will connect to other modules
+
+conn = sqlite3.connect(database_name)
+cur = conn.cursor()
+
+cur.execute('PRAGMA foreign_keys = ON;')
+
+cur.execute('''
 CREATE TABLE "_Rig" (
   "_rigID" TEXT PRIMARY KEY,
   "_rigDescription" TEXT,
   "hammerType" TEXT,
-  "hammerMass" REAL,
-  "hammerDropHeight" REAL,
-  "hammerEfficiency" REAL
+  "hammerEfficiency" REAL,
+  "miscID" TEXT
 );
+''')
 
+cur.execute('''
 CREATE TABLE "_Project" (
   "_Project_ID" TEXT PRIMARY KEY,
   "_Client_ID" TEXT,
@@ -18,21 +28,25 @@ CREATE TABLE "_Project" (
   "projectState" TEXT,
   "projectCounty" TEXT,
   "coordinateDatum" TEXT,
-  FOREIGN KEY("_Client_ID") REFERENCES "_Client"("_Client_ID")
+  FOREIGN KEY ("_Client_ID") REFERENCES "_Client" ("_Client_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "_Client" (
   "_Client_ID" TEXT PRIMARY KEY,
   "clientName" TEXT,
   "clientContact" TEXT
 );
+''')
 
+cur.execute('''
 CREATE TABLE "_HoleInfo" (
   "_holeID" TEXT PRIMARY KEY,
   "_rigID" TEXT,
   "_Project_ID" TEXT,
   "holeName" TEXT,
-  "measureType" TEXT,
+  "holeType" TEXT,
   "topLatitude" REAL,
   "topLongitude" REAL,
   "groundSurface" REAL,
@@ -43,26 +57,32 @@ CREATE TABLE "_HoleInfo" (
   "timeInterval_end" TEXT,
   "hole_diameter" REAL,
   "termination" TEXT,
-  FOREIGN KEY("_rigID") REFERENCES "_Rig"("_rigID"),
-  FOREIGN KEY("_Project_ID") REFERENCES "_Project"("_Project_ID")
+  FOREIGN KEY ("_rigID") REFERENCES "_Rig" ("_rigID"),
+  FOREIGN KEY ("_Project_ID") REFERENCES "_Project" ("_Project_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "_waterLevels" (
   "_holeID" TEXT,
   "waterDepth" REAL,
   "TimeInterval_start" TEXT,
   "TimeInterval_end" TEXT,
-  FOREIGN KEY("_holeID") REFERENCES "_HoleInfo"("_holeID")
+  FOREIGN KEY ("_holeID") REFERENCES "_HoleInfo" ("_holeID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "_caveIn" (
   "_holeID" TEXT,
   "caveInDepth" REAL,
   "TimeInterval_start" TEXT,
   "TimeInterval_end" TEXT,
-  FOREIGN KEY("_holeID") REFERENCES "_HoleInfo"("_holeID")
+  FOREIGN KEY ("_holeID") REFERENCES "_HoleInfo" ("_holeID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "_Samples" (
   "_Sample_ID" TEXT PRIMARY KEY,
   "_holeID" TEXT,
@@ -70,9 +90,11 @@ CREATE TABLE "_Samples" (
   "pos_topDepth" REAL,
   "pos_bottomDepth" REAL,
   "sampleMethod" TEXT,
-  FOREIGN KEY("_holeID") REFERENCES "_HoleInfo"("_holeID")
+  FOREIGN KEY ("_holeID") REFERENCES "_HoleInfo" ("_holeID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "_SPT" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
@@ -89,45 +111,37 @@ CREATE TABLE "_SPT" (
   "blowCount_index4" INTEGER,
   "penetration_index4" REAL,
   "recovery" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "MoistureContent" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
   "moistureContent" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
 
-CREATE TABLE "PorePressureElementType" (
-  "cellId" TEXT PRIMARY KEY,
-  "filterElementLocation" REAL,
-  "poreCapacity" REAL,
-  "porousElementType" TEXT,
-  "saturationFluid" TEXT,
-  "saturationMethod" TEXT,
-  "saturationMethodRef" TEXT
-);
-
+cur.execute('''
 CREATE TABLE "StaticConePenetrationTest" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
-  "cellId" TEXT,
-  "_Cone_ID" TEXT,
   "penetrationRate" REAL,
-  "tipResistance" REAL,
-  "sleeveFriction" REAL,
-  "porePressure" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("cellId") REFERENCES "PorePressureElementType"("cellId"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID"),
-  FOREIGN KEY("_Cone_ID") REFERENCES "Cone_Info"("_Cone_ID")
+  "tipStress_tsf" REAL,
+  "sleeveStress_tsf" REAL,
+  "porePressure_tsf" REAL,
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "Cone_Info" (
-  "_Cone_ID" TEXT PRIMARY KEY,
+  "_rigID" TEXT,
   "penetrometerType" TEXT,
   "distanceTipToSleeve" REAL,
   "frictionReducer" TEXT,
@@ -139,9 +153,13 @@ CREATE TABLE "Cone_Info" (
   "sleeveCapacity" REAL,
   "surfaceCapacity" REAL,
   "tipApexAngle" REAL,
-  "tipArea" REAL
+  "tipArea" REAL,
+  "Nkt" REAL,
+  FOREIGN KEY ("_rigID") REFERENCES "_Rig" ("_rigID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "TestMethod" (
   "_Method_ID" TEXT PRIMARY KEY,
   "methodName" TEXT,
@@ -149,24 +167,21 @@ CREATE TABLE "TestMethod" (
   "units" TEXT,
   "modification" TEXT
 );
+''')
 
+cur.execute('''
 CREATE TABLE "AtterbergLimits" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
   "plasticLimit" REAL,
   "liquidLimit" REAL,
   "plasticityIndex" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
 
-CREATE TABLE "ShelbyTube" (
-  "_Sample_ID" TEXT,
-  "_Method_ID" TEXT,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID")
-);
-
+cur.execute('''
 CREATE TABLE "Gradation" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
@@ -178,10 +193,12 @@ CREATE TABLE "Gradation" (
   "retNo100" REAL,
   "retNo140" REAL,
   "retNo200" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "Consolidation" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
@@ -191,19 +208,23 @@ CREATE TABLE "Consolidation" (
   "recompressionIndex" REAL,
   "overburdenPressure" REAL,
   "preconsolidationPressure" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID"),
-  FOREIGN KEY("_Cons_Load_ID") REFERENCES "ConsolidationLoading"("_Cons_Load_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "ConsolidationLoading" (
-  "_Cons_Load_ID" TEXT PRIMARY KEY,
+  "_Cons_Load_ID" TEXT,
   "loadIncrement" REAL,
   "pressure" REAL,
   "Cv" REAL,
-  "Calpha" REAL
+  "Calpha" REAL,
+  FOREIGN KEY ("_Cons_Load_ID") REFERENCES "Consolidation" ("_Cons_Load_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "Geology_Library" (
   "_Geo_ID" TEXT PRIMARY KEY,
   "reference" TEXT,
@@ -217,7 +238,9 @@ CREATE TABLE "Geology_Library" (
   "tertComp" TEXT,
   "addNote" TEXT
 );
+''')
 
+cur.execute('''
 CREATE TABLE "Field_Strata" (
   "_holeID" TEXT,
   "_Geo_ID" TEXT,
@@ -232,10 +255,12 @@ CREATE TABLE "Field_Strata" (
   "addNote" TEXT,
   "pos_topDepth" REAL,
   "pos_bottomDepth" REAL,
-  FOREIGN KEY("_holeID") REFERENCES "_HoleInfo"("_holeID"),
-  FOREIGN KEY("_Geo_ID") REFERENCES "Geology_Library"("_Geo_ID")
+  FOREIGN KEY ("_holeID") REFERENCES "_HoleInfo" ("_holeID"),
+  FOREIGN KEY ("_Geo_ID") REFERENCES "Geology_Library" ("_Geo_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "Final_Strata" (
   "_holeID" TEXT,
   "_Geo_ID" TEXT,
@@ -250,26 +275,31 @@ CREATE TABLE "Final_Strata" (
   "addNote" TEXT,
   "pos_topDepth" REAL,
   "pos_bottomDepth" REAL,
-  FOREIGN KEY("_holeID") REFERENCES "_HoleInfo"("_holeID"),
-  FOREIGN KEY("_Geo_ID") REFERENCES "Geology_Library"("_Geo_ID")
+  FOREIGN KEY ("_holeID") REFERENCES "_HoleInfo" ("_holeID"),
+  FOREIGN KEY ("_Geo_ID") REFERENCES "Geology_Library" ("_Geo_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "WellConstr" (
   "_holeID" TEXT,
   "material" TEXT,
   "pos_topDepth" REAL,
   "pos_bottomDepth" REAL,
-  FOREIGN KEY("_holeID") REFERENCES "_HoleInfo"("_holeID")
+  FOREIGN KEY ("_holeID") REFERENCES "_HoleInfo" ("_holeID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "RockCoring" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
   "_CoringMethod_ID" TEXT,
+  "_Geo_ID" TEXT,
   "rockType" TEXT,
   "color" TEXT,
   "weathering" TEXT,
-  "TEXTure" TEXT,
+  "texture" TEXT,
   "relStrength" TEXT,
   "bedding" TEXT,
   "miscDesc" TEXT,
@@ -283,29 +313,37 @@ CREATE TABLE "RockCoring" (
   "surfaceDescription" TEXT,
   "RQD" REAL,
   "soilLens" TEXT,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID"),
-  FOREIGN KEY("_CoringMethod_ID") REFERENCES "CoringMethod"("_CoringMethod_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID"),
+  FOREIGN KEY ("_CoringMethod_ID") REFERENCES "CoringMethod" ("_CoringMethod_ID"),
+  FOREIGN KEY ("_Geo_ID") REFERENCES "Geology_Library" ("_Geo_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "CoringMethod" (
   "_CoringMethod_ID" TEXT PRIMARY KEY,
   "coreSize" TEXT,
   "bitSize" REAL,
   "bitType" TEXT
 );
+''')
 
+cur.execute('''
 CREATE TABLE "DrillMethod" (
   "_holeID" TEXT,
   "drillMethod" TEXT,
   "rodType" TEXT,
   "additives" TEXT,
   "misc" TEXT,
-  FOREIGN KEY("_holeID") REFERENCES "_HoleInfo"("_holeID")
+  FOREIGN KEY ("_holeID") REFERENCES "_HoleInfo" ("_holeID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "fieldSoilDesc" (
   "_Sample_ID" TEXT,
+  "_Geo_ID" TEXT,
   "soilStrength" TEXT,
   "color" TEXT,
   "primaryComp" TEXT,
@@ -315,17 +353,22 @@ CREATE TABLE "fieldSoilDesc" (
   "visualMoisture" TEXT,
   "soilDesc" TEXT,
   "addNote" TEXT,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Geo_ID") REFERENCES "Geology_Library" ("_Geo_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "WellReadings" (
   "_holeID" TEXT,
   "reading" REAL,
   "temp" REAL,
   "TimeInterval" TEXT,
-  FOREIGN KEY("_holeID") REFERENCES "_HoleInfo"("_holeID")
+  FOREIGN KEY ("_holeID") REFERENCES "_HoleInfo" ("_holeID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "riser" (
   "_holeID" TEXT,
   "pipeMaterial" TEXT,
@@ -334,17 +377,21 @@ CREATE TABLE "riser" (
   "screenType" TEXT,
   "pos_topDepth" REAL,
   "pos_bottomDepth" REAL,
-  FOREIGN KEY("_holeID") REFERENCES "_HoleInfo"("_holeID")
+  FOREIGN KEY ("_holeID") REFERENCES "_HoleInfo" ("_holeID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "piezometer" (
   "_holeID" TEXT,
   "piezoType" TEXT,
   "pos_topDepth" REAL,
   "pos_bottomDepth" REAL,
-  FOREIGN KEY("_holeID") REFERENCES "_HoleInfo"("_holeID")
+  FOREIGN KEY ("_holeID") REFERENCES "_HoleInfo" ("_holeID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "uuTest" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
@@ -368,10 +415,12 @@ CREATE TABLE "uuTest" (
   "totC" REAL,
   "effPhi" REAL,
   "effC" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "cuTest" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
@@ -397,10 +446,12 @@ CREATE TABLE "cuTest" (
   "totC" REAL,
   "effPhi" REAL,
   "effC" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "dsTest" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
@@ -422,10 +473,12 @@ CREATE TABLE "dsTest" (
   "totC" REAL,
   "effPhi" REAL,
   "effC" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "Perm" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
@@ -433,10 +486,12 @@ CREATE TABLE "Perm" (
   "permKh" REAL,
   "confiningPres" REAL,
   "backPres" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "Proctor" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
@@ -445,33 +500,87 @@ CREATE TABLE "Proctor" (
   "optimumMoisture" REAL,
   "dryDensity" REAL,
   "moistureContent" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "CBR" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
   "sampleNumber" REAL,
   "penetrationID" TEXT,
   "penetration" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "200wash" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
   "passing200" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
 
+cur.execute('''
 CREATE TABLE "Hydrometer" (
   "_Sample_ID" TEXT,
   "_Method_ID" TEXT,
   "percentClay" REAL,
   "percentSilt" REAL,
-  FOREIGN KEY("_Sample_ID") REFERENCES "_Samples"("_Sample_ID"),
-  FOREIGN KEY("_Method_ID") REFERENCES "TestMethod"("_Method_ID")
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
 );
+''')
+
+cur.execute('''
+CREATE TABLE "Pocket_Pen" (
+  "_Sample_ID" TEXT,
+  "_Method_ID" TEXT,
+  "reading" REAL,
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
+);
+''')
+
+cur.execute('''
+CREATE TABLE "torvane" (
+  "_Sample_ID" TEXT,
+  "_Method_ID" TEXT,
+  "reading" REAL,
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
+);
+''')
+
+cur.execute('''
+CREATE TABLE "dilatometer" (
+  "_Sample_ID" TEXT,
+  "_Method_ID" TEXT,
+  "reading1" REAL,
+  "reading2" REAL,
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
+);
+''')
+
+cur.execute('''
+CREATE TABLE "pressuremeter" (
+  "_Sample_ID" TEXT,
+  "_Method_ID" TEXT,
+  "pressure" REAL,
+  "volume" REAL,
+  FOREIGN KEY ("_Sample_ID") REFERENCES "_Samples" ("_Sample_ID"),
+  FOREIGN KEY ("_Method_ID") REFERENCES "TestMethod" ("_Method_ID")
+);
+''')
+
+
+
+conn.commit()
+conn.close()
