@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:diggsml.org)",
+      "Bash(python:*)",
+      "Bash(grep:*)",
+      "Bash(mkdir:*)",
+      "Bash(move \"working/excel_to_sqlite_converter_corrected.py\" \"bin/excel_to_sqlite_converter.py\")",
+      "Bash(move \"working/sqlite_to_diggs_compliant.py\" \"bin/sqlite_to_diggs_converter.py\")",
+      "Bash(move \"working/diggs_to_sqlite_importer.py\" \"bin/diggs_to_sqlite_importer.py\")",
+      "Bash(move \"working/create_excel_template.py\" \"bin/excel_template_generator.py\")",
+      "Bash(cp:*)",
+      "Bash(rm:*)",
+      "Bash(mv:*)"
+    ],
+    "deny": []
+  }
+}
