@@ -1,0 +1,4 @@
+# Requirements for DIGGS Data Processing Manager
+pandas>=1.5.0
+openpyxl>=3.0.0
+cx_Freeze>=6.0.0

@@ -11,7 +11,8 @@
       "Bash(move \"working/create_excel_template.py\" \"bin/excel_template_generator.py\")",
       "Bash(cp:*)",
       "Bash(rm:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(timeout:*)"
     ],
     "deny": []
   }

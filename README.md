@@ -251,13 +251,44 @@ This is an open source project. Contributions are welcome!
 4. Add tests for new functionality
 5. Submit a pull request
 
+## Desktop Application
+
+A standalone desktop application with GUI interface is available in the `executable/` folder:
+
+### **Quick Start - Desktop Version**
+```bash
+# Navigate to executable folder
+cd executable
+
+# Test the GUI application
+python diggs_processor_gui.py
+
+# Or build standalone executable
+build_executable.bat
+```
+
+### **GUI Features**
+- **Professional Interface** - Tabbed interface with progress tracking
+- **Drag & Drop Support** - Easy file handling
+- **Real-time Progress** - Visual feedback for all operations
+- **Error Handling** - User-friendly error messages
+- **No Python Required** - Standalone executable for end users
+
+### **Distribution**
+- **Desktop Shortcuts** - Automatic installation with `install.bat`
+- **Start Menu Integration** - Professional Windows integration
+- **Enterprise Ready** - Single executable for organization deployment
+- **Cross-Platform** - Can be built for Windows, macOS, Linux
+
+See `executable/README_EXECUTABLE.md` for complete desktop application documentation.
+
 ## Future Development
 
+- [x] **Executable distribution** - ✅ **COMPLETED** - Full GUI application available
 - [ ] Web-based interface
 - [ ] Additional test method support
 - [ ] Real-time data validation
 - [ ] Integration with laboratory systems
-- [ ] Executable distribution
 - [ ] API endpoint for web services
 
 **Built with the Abstract Factory Design Pattern for extensible, maintainable geotechnical data processing.**
