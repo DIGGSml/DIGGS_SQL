@@ -1,18 +1,9 @@
 #!/usr/bin/env python3
 """
-DIGGS Data Processing Manager - GUI Application
+DIGGS Data Processing Manager - GUI Application (Fixed Version)
 
 This application provides a graphical user interface for the DIGGS data processing
 system using the Abstract Factory design pattern.
-
-Features:
-- Excel template generation
-- Excel to SQLite conversion
-- SQLite to DIGGS XML export
-- DIGGS XML to SQLite import
-- Drag-and-drop file support
-- Progress tracking
-- Error handling with user-friendly messages
 """
 
 import tkinter as tk
@@ -23,28 +14,66 @@ import sys
 from pathlib import Path
 import webbrowser
 
-# Add src directory to Python path for imports
-current_dir = Path(__file__).parent
+def setup_import_paths():
+    """Setup import paths for both development and executable environments"""
+    if hasattr(sys, 'frozen'):
+        # Running as executable - modules are in the same directory
+        current_dir = os.path.dirname(sys.executable)
+    else:
+        # Running in development - modules are in current script directory
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Add current directory to path
+    if current_dir not in sys.path:
+        sys.path.insert(0, current_dir)
+    
+    # Also add src subdirectory if it exists
+    src_dir = os.path.join(current_dir, "src")
+    if os.path.exists(src_dir) and src_dir not in sys.path:
+        sys.path.insert(0, src_dir)
+    
+    return current_dir
 
-# Handle both development and executable environments
-if hasattr(sys, 'frozen'):
-    # Running as executable - modules are in the same directory
-    src_dir = current_dir / "src"
-    assets_dir = current_dir / "assets"
-else:
-    # Running in development - modules are in src subdirectory
-    src_dir = current_dir / "src"
-    assets_dir = current_dir / "assets"
+def import_factory_manager():
+    """Import the factory manager with robust error handling"""
+    try:
+        # First try direct import
+        from processor_factories import DataProcessorFactoryManager
+        return DataProcessorFactoryManager
+    except ImportError:
+        try:
+            # Try importing from src
+            import sys
+            import os
+            src_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")
+            if src_dir not in sys.path:
+                sys.path.insert(0, src_dir)
+            from processor_factories import DataProcessorFactoryManager
+            return DataProcessorFactoryManager
+        except ImportError as e:
+            # Show error in console first
+            print(f"Import Error: {e}")
+            print(f"Python path: {sys.path}")
+            print(f"Current directory: {os.getcwd()}")
+            print(f"Script directory: {os.path.dirname(os.path.abspath(__file__))}")
+            
+            # Create a simple error window
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showerror(
+                "Import Error", 
+                f"Failed to import processor factories.\n\n"
+                f"Error: {e}\n\n"
+                f"Please ensure all required files are present."
+            )
+            return None
 
-# Add both current directory and src directory to path
-sys.path.insert(0, str(current_dir))
-sys.path.insert(0, str(src_dir))
+# Setup paths before any imports
+current_dir = setup_import_paths()
 
-# Import our factory system
-try:
-    from processor_factories import DataProcessorFactoryManager
-except ImportError as e:
-    messagebox.showerror("Import Error", f"Failed to import processor factories: {e}")
+# Try to import factory manager
+DataProcessorFactoryManager = import_factory_manager()
+if DataProcessorFactoryManager is None:
     sys.exit(1)
 
 class DiggsProcessorGUI:
@@ -57,16 +86,17 @@ class DiggsProcessorGUI:
         self.root.minsize(800, 600)
         
         # Initialize factory manager
-        self.factory_manager = DataProcessorFactoryManager()
+        try:
+            self.factory_manager = DataProcessorFactoryManager()
+        except Exception as e:
+            messagebox.showerror("Initialization Error", f"Failed to initialize factory manager: {e}")
+            sys.exit(1)
         
         # Configure style
         self.setup_styles()
         
         # Create GUI components
         self.create_widgets()
-        
-        # Set up drag and drop
-        self.setup_drag_drop()
         
         # Center window
         self.center_window()
@@ -156,21 +186,7 @@ class DiggsProcessorGUI:
         ttk.Button(output_frame, text="Browse", command=self.browse_template_output).grid(row=0, column=1)
         
         # Generate button
-        ttk.Button(template_frame, text="Generate Template", command=self.generate_template,
-                  style='Accent.TButton').grid(row=6, column=0, pady=20)
-        
-        # Template descriptions
-        desc_frame = ttk.LabelFrame(template_frame, text="Template Descriptions", padding="5")
-        desc_frame.grid(row=7, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
-        
-        descriptions = [
-            "• Blank Template: Empty Excel file with all required sheets and headers",
-            "• Sample Template: Template with example geotechnical data for reference",
-            "• Documentation: Detailed explanation of all sheets and data fields"
-        ]
-        
-        for i, desc in enumerate(descriptions):
-            ttk.Label(desc_frame, text=desc).grid(row=i, column=0, sticky=tk.W, pady=2)
+        ttk.Button(template_frame, text="Generate Template", command=self.generate_template).grid(row=6, column=0, pady=20)
     
     def create_convert_tab(self):
         """Create Excel to SQLite conversion tab"""
@@ -200,11 +216,7 @@ class DiggsProcessorGUI:
         ttk.Button(output_frame, text="Browse", command=self.browse_sqlite_output).grid(row=0, column=1)
         
         # Convert button
-        ttk.Button(convert_frame, text="Convert Excel to SQLite", command=self.convert_excel_to_sqlite,
-                  style='Accent.TButton').grid(row=4, column=0, pady=20)
-        
-        # Drag and drop area
-        self.create_drag_drop_area(convert_frame, "Drag Excel files here", 5)
+        ttk.Button(convert_frame, text="Convert Excel to SQLite", command=self.convert_excel_to_sqlite).grid(row=4, column=0, pady=20)
     
     def create_export_tab(self):
         """Create SQLite to DIGGS export tab"""
@@ -234,23 +246,7 @@ class DiggsProcessorGUI:
         ttk.Button(output_frame, text="Browse", command=self.browse_xml_output).grid(row=0, column=1)
         
         # Export button
-        ttk.Button(export_frame, text="Export to DIGGS XML", command=self.export_to_diggs,
-                  style='Accent.TButton').grid(row=4, column=0, pady=20)
-        
-        # Features list
-        features_frame = ttk.LabelFrame(export_frame, text="DIGGS 2.6 Features", padding="5")
-        features_frame.grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
-        
-        features = [
-            "✅ DIGGS 2.6 compliant structure",
-            "✅ Proper XML namespaces and schema validation",
-            "✅ Units of measure for all measurements",
-            "✅ Data validation and quality control",
-            "✅ GML-compliant geographic coordinates"
-        ]
-        
-        for i, feature in enumerate(features):
-            ttk.Label(features_frame, text=feature).grid(row=i, column=0, sticky=tk.W, pady=2)
+        ttk.Button(export_frame, text="Export to DIGGS XML", command=self.export_to_diggs).grid(row=4, column=0, pady=20)
     
     def create_import_tab(self):
         """Create DIGGS to SQLite import tab"""
@@ -280,23 +276,7 @@ class DiggsProcessorGUI:
         ttk.Button(output_frame, text="Browse", command=self.browse_db_output).grid(row=0, column=1)
         
         # Import button
-        ttk.Button(import_frame, text="Import DIGGS XML", command=self.import_diggs,
-                  style='Accent.TButton').grid(row=4, column=0, pady=20)
-        
-        # Import capabilities
-        capabilities_frame = ttk.LabelFrame(import_frame, text="Import Capabilities", padding="5")
-        capabilities_frame.grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
-        
-        capabilities = [
-            "• Parses DIGGS 2.6 XML structure",
-            "• Extracts projects, boreholes, samples, and test data",
-            "• Handles Atterberg Limits and SPT test results",
-            "• Creates normalized SQLite database structure",
-            "• Provides detailed import summary"
-        ]
-        
-        for i, capability in enumerate(capabilities):
-            ttk.Label(capabilities_frame, text=capability).grid(row=i, column=0, sticky=tk.W, pady=2)
+        ttk.Button(import_frame, text="Import DIGGS XML", command=self.import_diggs).grid(row=4, column=0, pady=20)
     
     def create_about_tab(self):
         """Create about/help tab"""
@@ -319,37 +299,6 @@ Built using the Abstract Factory Design Pattern for extensible, maintainable cod
         """
         
         ttk.Label(about_frame, text=description.strip(), justify=tk.LEFT).grid(row=1, column=0, sticky=tk.W, pady=(0, 20))
-        
-        # Version info
-        version_frame = ttk.LabelFrame(about_frame, text="Version Information", padding="5")
-        version_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(10, 0))
-        
-        ttk.Label(version_frame, text="Version: 1.0.0").grid(row=0, column=0, sticky=tk.W)
-        ttk.Label(version_frame, text="DIGGS Standard: 2.6").grid(row=1, column=0, sticky=tk.W)
-        ttk.Label(version_frame, text="Architecture: Abstract Factory Pattern").grid(row=2, column=0, sticky=tk.W)
-        
-        # Links
-        links_frame = ttk.LabelFrame(about_frame, text="Links", padding="5")
-        links_frame.grid(row=3, column=0, sticky=(tk.W, tk.E), pady=(10, 0))
-        
-        ttk.Button(links_frame, text="DIGGS Standard Documentation", 
-                  command=lambda: webbrowser.open("http://www.diggsml.org/")).grid(row=0, column=0, sticky=tk.W, pady=2)
-        ttk.Button(links_frame, text="Database Schema Diagram", 
-                  command=lambda: webbrowser.open("https://dbdiagram.io/d/DIGGS-SQL-Structure-668dcbd19939893dae7ebb48")).grid(row=1, column=0, sticky=tk.W, pady=2)
-    
-    def create_drag_drop_area(self, parent, text, row):
-        """Create a drag and drop area"""
-        drop_frame = ttk.LabelFrame(parent, text="Quick Drop", padding="10")
-        drop_frame.grid(row=row, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(20, 0))
-        
-        drop_label = ttk.Label(drop_frame, text=text, font=('Arial', 10, 'italic'))
-        drop_label.grid(row=0, column=0, pady=20)
-    
-    def setup_drag_drop(self):
-        """Setup drag and drop functionality (basic implementation)"""
-        # Note: Full drag-and-drop would require additional libraries like tkinterdnd2
-        # This is a placeholder for the interface
-        pass
     
     def center_window(self):
         """Center the window on screen"""
@@ -375,7 +324,6 @@ Built using the Abstract Factory Design Pattern for extensible, maintainable cod
         )
         if filename:
             self.excel_input.set(filename)
-            # Auto-generate output filename
             if not self.sqlite_output.get():
                 base = os.path.splitext(filename)[0]
                 self.sqlite_output.set(f"{base}.db")
@@ -394,7 +342,6 @@ Built using the Abstract Factory Design Pattern for extensible, maintainable cod
         )
         if filename:
             self.db_input.set(filename)
-            # Auto-generate output filename
             if not self.xml_output.get():
                 base = os.path.splitext(filename)[0]
                 self.xml_output.set(f"{base}_diggs_2.6_compliant.xml")
@@ -413,7 +360,6 @@ Built using the Abstract Factory Design Pattern for extensible, maintainable cod
         )
         if filename:
             self.xml_input.set(filename)
-            # Auto-generate output filename
             if not self.db_output.get():
                 base = os.path.splitext(filename)[0]
                 self.db_output.set(f"{base}_imported.db")
@@ -600,14 +546,6 @@ def main():
     """Main entry point"""
     # Create and configure root window
     root = tk.Tk()
-    
-    # Set window icon (if available)
-    try:
-        # You can add an icon file here
-        # root.iconbitmap('icon.ico')
-        pass
-    except:
-        pass
     
     # Create and run application
     app = DiggsProcessorGUI(root)

@@ -12,7 +12,12 @@
       "Bash(cp:*)",
       "Bash(rm:*)",
       "Bash(mv:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(ls:*)",
+      "Bash(minimal_test.exe)",
+      "Bash(./minimal_test.exe)",
+      "Bash(pip install:*)",
+      "Bash(./DIGGS_Processor_Manager.exe)"
     ],
     "deny": []
   }
