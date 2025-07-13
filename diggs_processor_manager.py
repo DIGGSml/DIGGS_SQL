@@ -114,6 +114,7 @@ Examples:
   %(prog)s diggs importer data.xml                # Import DIGGS XML to SQLite
   %(prog)s excel template --template-type blank   # Generate blank Excel template
   %(prog)s excel template --template-type sample  # Generate sample Excel template
+  %(prog)s visualization database data.db         # Launch interactive database viewer
         """
     )
     
@@ -151,6 +152,14 @@ Examples:
     diggs_imp_parser = diggs_subparsers.add_parser('importer', help='Import DIGGS XML to SQLite')
     diggs_imp_parser.add_argument('input', help='Input DIGGS XML file path')
     diggs_imp_parser.add_argument('--output', '-o', help='Output SQLite database path')
+    
+    # Visualization factory commands
+    viz_parser = subparsers.add_parser('visualization', help='Database visualization operations')
+    viz_subparsers = viz_parser.add_subparsers(dest='processor', help='Visualization processors')
+    
+    # Database visualizer
+    viz_db_parser = viz_subparsers.add_parser('database', help='Launch interactive database visualization')
+    viz_db_parser.add_argument('input', help='Input SQLite database path')
     
     return parser
 
@@ -226,6 +235,24 @@ def main():
             print()
             
             success = manager.process_data('diggs', 'importer', input_path, output_path)
+    
+    # Handle Visualization operations
+    elif args.command == 'visualization':
+        if not args.processor:
+            print("Error: Visualization processor type required")
+            return
+        
+        if args.processor == 'database':
+            input_path = manager.validate_file_path(args.input)
+            
+            print(f"Launching: Database Visualization Tool")
+            print(f"Database: {input_path}")
+            print()
+            print("Opening interactive visualization interface...")
+            print("Close the visualization window to return to command line.")
+            print()
+            
+            success = manager.process_data('visualization', 'database', input_path)
     
     else:
         print(f"Unknown command: {args.command}")

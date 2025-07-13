@@ -2,6 +2,7 @@ from typing import Dict, Any, Optional
 from .processor_interfaces import ProcessorFactory, DataProcessor
 from .excel_processor import ExcelToSQLiteConverter, ExcelTemplateGenerator
 from .diggs_processor import SQLiteToDiggsConverter, DiggsToSQLiteImporter
+from .visualization_processor import DatabaseVisualizationProcessor
 
 class ExcelProcessorFactory(ProcessorFactory):
     """Factory for Excel-related processors"""
@@ -63,13 +64,42 @@ class DiggsProcessorFactory(ProcessorFactory):
             "diggs_to_sqlite": "Import DIGGS XML files into SQLite database"
         }
 
+class VisualizationProcessorFactory(ProcessorFactory):
+    """Factory for visualization processors"""
+    
+    def get_factory_type(self) -> str:
+        return "visualization"
+    
+    def create_processor(self, processor_type: str, config: Optional[Dict[str, Any]] = None) -> DataProcessor:
+        """Create visualization processor of specified type"""
+        processors = {
+            "database": DatabaseVisualizationProcessor,
+            "db_viewer": DatabaseVisualizationProcessor,
+            "visualizer": DatabaseVisualizationProcessor
+        }
+        
+        if processor_type.lower() not in processors:
+            raise ValueError(f"Unknown visualization processor type: {processor_type}")
+        
+        processor_class = processors[processor_type.lower()]
+        return processor_class(config)
+    
+    def get_available_processors(self) -> Dict[str, str]:
+        """Return available visualization processors"""
+        return {
+            "database": "Interactive SQLite database visualization and analysis tool",
+            "db_viewer": "Interactive SQLite database visualization and analysis tool",
+            "visualizer": "Interactive SQLite database visualization and analysis tool"
+        }
+
 class DataProcessorFactoryManager:
     """Manager for all processor factories - implements Abstract Factory pattern"""
     
     def __init__(self):
         self._factories = {
             "excel": ExcelProcessorFactory(),
-            "diggs": DiggsProcessorFactory()
+            "diggs": DiggsProcessorFactory(),
+            "visualization": VisualizationProcessorFactory()
         }
     
     def get_factory(self, factory_type: str) -> ProcessorFactory:
@@ -89,7 +119,8 @@ class DataProcessorFactoryManager:
         """Return all available factories"""
         return {
             "excel": "Excel file processing (conversion and template generation)",
-            "diggs": "DIGGS XML processing (conversion and import)"
+            "diggs": "DIGGS XML processing (conversion and import)",
+            "visualization": "Interactive database visualization and analysis"
         }
     
     def get_all_available_processors(self) -> Dict[str, Dict[str, str]]:
@@ -116,4 +147,5 @@ class DataProcessorFactoryManager:
         print("  manager.create_processor('diggs', 'importer', config)")
         print("  manager.create_processor('excel', 'template', config)")
         print("  manager.create_processor('diggs', 'converter', config)")
+        print("  manager.create_processor('visualization', 'database', config)")
         print()

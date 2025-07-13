@@ -108,6 +108,7 @@ class DiggsProcessorGUI:
         self.create_convert_tab()
         self.create_export_tab()
         self.create_import_tab()
+        self.create_visualization_tab()
         self.create_about_tab()
         
         # Progress frame
@@ -298,6 +299,59 @@ class DiggsProcessorGUI:
         for i, capability in enumerate(capabilities):
             ttk.Label(capabilities_frame, text=capability).grid(row=i, column=0, sticky=tk.W, pady=2)
     
+    def create_visualization_tab(self):
+        """Create database visualization tab"""
+        viz_frame = ttk.Frame(self.notebook, padding="10")
+        self.notebook.add(viz_frame, text="Database Viewer")
+        
+        # Database file selection
+        ttk.Label(viz_frame, text="SQLite Database File:", style='Header.TLabel').grid(row=0, column=0, sticky=tk.W, pady=(0, 5))
+        
+        db_input_frame = ttk.Frame(viz_frame)
+        db_input_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
+        db_input_frame.columnconfigure(0, weight=1)
+        
+        self.viz_db_input = tk.StringVar()
+        ttk.Entry(db_input_frame, textvariable=self.viz_db_input).grid(row=0, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
+        ttk.Button(db_input_frame, text="Browse", command=self.browse_viz_database).grid(row=0, column=1)
+        
+        # Launch visualization button
+        ttk.Button(viz_frame, text="Launch Interactive Visualization", 
+                  command=self.launch_visualization,
+                  style='Accent.TButton').grid(row=2, column=0, pady=20)
+        
+        # Features description
+        features_frame = ttk.LabelFrame(viz_frame, text="Visualization Features", padding="5")
+        features_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
+        
+        features = [
+            "• Database Overview - Summary of all tables and record counts",
+            "• Table Browser - Explore table structures and sample data",
+            "• Borehole Map - Interactive map of drilling locations",
+            "• SPT Analysis - Blow count vs depth analysis",
+            "• Atterberg Limits - Plasticity chart visualization",
+            "• Soil Profile - Stratigraphy visualization by borehole",
+            "• SQL Query Tool - Custom database queries with results",
+            "• Export Capabilities - Save visualizations and query results"
+        ]
+        
+        for i, feature in enumerate(features):
+            ttk.Label(features_frame, text=feature).grid(row=i, column=0, sticky=tk.W, pady=1)
+        
+        # Usage instructions
+        usage_frame = ttk.LabelFrame(viz_frame, text="Usage Instructions", padding="5")
+        usage_frame.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(10, 0))
+        
+        instructions = [
+            "1. Select a SQLite database file (.db) created by this application",
+            "2. Click 'Launch Interactive Visualization' to open the viewer",
+            "3. Navigate through tabs to explore different visualizations",
+            "4. Use the SQL Query Tool for custom analysis"
+        ]
+        
+        for i, instruction in enumerate(instructions):
+            ttk.Label(usage_frame, text=instruction).grid(row=i, column=0, sticky=tk.W, pady=2)
+
     def create_about_tab(self):
         """Create about/help tab"""
         about_frame = ttk.Frame(self.notebook, padding="10")
@@ -425,6 +479,52 @@ Built using the Abstract Factory Design Pattern for extensible, maintainable cod
         )
         if filename:
             self.db_output.set(filename)
+    
+    def browse_viz_database(self):
+        """Browse for database file to visualize"""
+        filename = filedialog.askopenfilename(
+            filetypes=[("SQLite database", "*.db"), ("All files", "*.*")]
+        )
+        if filename:
+            self.viz_db_input.set(filename)
+    
+    def launch_visualization(self):
+        """Launch the database visualization tool"""
+        db_path = self.viz_db_input.get().strip()
+        
+        if not db_path:
+            messagebox.showerror("Error", "Please select a database file to visualize.")
+            return
+        
+        if not os.path.exists(db_path):
+            messagebox.showerror("Error", f"Database file not found: {db_path}")
+            return
+        
+        # Launch visualization in a separate thread to avoid blocking the GUI
+        def run_visualization():
+            try:
+                self.log_message(f"Launching visualization for: {os.path.basename(db_path)}")
+                self.start_progress()
+                
+                # Create visualization processor
+                viz_processor = self.factory_manager.create_processor('visualization', 'database')
+                
+                # Launch the visualization interface
+                success = viz_processor.process(db_path)
+                
+                if success:
+                    self.log_message("Visualization launched successfully", "SUCCESS")
+                else:
+                    self.log_message("Failed to launch visualization", "ERROR")
+                    
+            except Exception as e:
+                self.log_message(f"Error launching visualization: {str(e)}", "ERROR")
+                messagebox.showerror("Visualization Error", f"Failed to launch visualization:\n{str(e)}")
+            finally:
+                self.stop_progress()
+        
+        thread = threading.Thread(target=run_visualization, daemon=True)
+        thread.start()
     
     # Processing methods
     def log_message(self, message, level="INFO"):
