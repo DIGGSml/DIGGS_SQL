@@ -779,9 +779,11 @@ Built using the Abstract Factory Design Pattern for extensible, maintainable cod
                 self.create_empty_tree()
                 return
             
-            # Populate column filter dropdown
-            columns = list(self.current_data.columns)
-            self.filter_column_combo['values'] = columns
+            # Get all columns for filter dropdown
+            all_columns = list(self.current_data.columns)
+            
+            # Populate column filter dropdown with all columns
+            self.filter_column_combo['values'] = all_columns
             self.filter_column_var.set('')
             self.filter_value_var.set('')
             
@@ -791,7 +793,7 @@ Built using the Abstract Factory Design Pattern for extensible, maintainable cod
             # Update display
             self.update_tree_display()
             
-            self.info_label.config(text=f"Table: {table_name} | Rows: {len(self.current_data)} | Columns: {len(columns)}")
+            self.info_label.config(text=f"Table: {table_name} | Rows: {len(self.current_data)} | Columns: {len(all_columns)}")
             
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load table data: {str(e)}")
@@ -901,6 +903,11 @@ Built using the Abstract Factory Design Pattern for extensible, maintainable cod
         h_scroll.grid(row=1, column=0, sticky=(tk.W, tk.E))
         self.tree.configure(xscrollcommand=h_scroll.set)
     
+    def get_display_columns(self, all_columns):
+        """Return all columns for display"""
+        # Simply return all columns without filtering
+        return all_columns
+
     def update_tree_display(self):
         """Update the tree view with current filtered data"""
         if not hasattr(self, 'filtered_data') or self.filtered_data is None:
@@ -910,21 +917,30 @@ Built using the Abstract Factory Design Pattern for extensible, maintainable cod
         if self.tree:
             self.tree.destroy()
         
-        # Create new tree
-        columns = list(self.filtered_data.columns)
-        self.tree = ttk.Treeview(self.tree_frame, columns=columns, show='tree headings', height=15)
+        # Get the most relevant columns to display
+        all_columns = list(self.filtered_data.columns)
+        display_columns = self.get_display_columns(all_columns)
+        
+        # Create new tree with selected columns
+        self.tree = ttk.Treeview(self.tree_frame, columns=display_columns, show='tree headings', height=15)
         self.tree.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Configure column 0 (tree column)
         self.tree.heading('#0', text='Row')
         self.tree.column('#0', width=50, minwidth=50)
         
-        # Configure data columns
-        for col in columns:
+        # Configure data columns with better spacing
+        for col in display_columns:
             self.tree.heading(col, text=col)
-            # Set column width based on content
-            max_width = max(len(col) * 8, 100)  # Minimum 100 pixels
-            self.tree.column(col, width=max_width, minwidth=50)
+            # Set column width based on content and column type
+            if any(term in col.lower() for term in ['name', 'description', 'comment', 'note']):
+                max_width = 200  # Wider for text fields
+            elif any(term in col.lower() for term in ['depth', 'elevation', 'moisture', 'density']):
+                max_width = 100  # Medium for numeric fields
+            else:
+                max_width = 150  # Default width
+            
+            self.tree.column(col, width=max_width, minwidth=80)
         
         # Add scrollbars
         v_scroll = ttk.Scrollbar(self.tree_frame, orient="vertical", command=self.tree.yview)
@@ -938,13 +954,20 @@ Built using the Abstract Factory Design Pattern for extensible, maintainable cod
         # Populate with data (limit to first 1000 rows for performance)
         max_rows = min(1000, len(self.filtered_data))
         for i, (index, row) in enumerate(self.filtered_data.head(max_rows).iterrows()):
-            # Convert all values to strings and handle NaN/None
-            values = [str(val) if pd.notna(val) else '' for val in row]
+            # Convert only the display columns to strings and handle NaN/None
+            values = [str(row[col]) if pd.notna(row[col]) else '' for col in display_columns]
             self.tree.insert('', 'end', text=str(index), values=values)
+        
+        # Update info label to show all columns are displayed
+        total_cols = len(all_columns)
+        current_info = self.info_label.cget('text')
+        column_info = f" (All {total_cols} columns)"
         
         # Show warning if data was truncated
         if len(self.filtered_data) > max_rows:
-            self.info_label.config(text=f"{self.info_label.cget('text')} (Showing first {max_rows} rows)")
+            self.info_label.config(text=f"{current_info}{column_info} (Showing first {max_rows} rows)")
+        else:
+            self.info_label.config(text=f"{current_info}{column_info}")
 
 def main():
     """Main entry point"""
