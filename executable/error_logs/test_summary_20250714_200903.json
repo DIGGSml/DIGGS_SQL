@@ -1,0 +1,26 @@
+{
+  "timestamp": "2025-07-14T20:09:21.264804",
+  "executable_path": "C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.13\\DIGGS_Processor_Manager.exe",
+  "executable_exists": true,
+  "executable_size": 20992,
+  "test_results": {
+    "minimal": {
+      "success": false,
+      "return_code": "TIMEOUT",
+      "stdout": "",
+      "stderr": "",
+      "error": "Timeout after 15 seconds",
+      "error_file": "C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\error_logs\\minimal_errors_20250714_200903.log"
+    },
+    "imports": {
+      "success": false,
+      "return_code": 4294967295,
+      "stdout": "=== Minimal Import Test ===\nPython executable: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.13\\minimal_test.exe\nScript location: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.13\\lib\\library.zip\\__main__minimal_test.pyc\nCurrent directory: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.13\nFrozen: True\nAdded to path: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.13\nAvailable .py files: ['diggs_processor.py', 'diggs_to_sqlite_importer.py', 'excel_processor.py', 'excel_template_generator.py', 'excel_to_sqlite_converter.py']\nPython path:\n  C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.13\n  C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.13\\lib\\library.zip\n  C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.13\\lib\n\n=== Testing Imports ===\n1. Testing processor_interfaces...\n   \u00e2\u0153\u201c processor_interfaces imported\n2. Testing processor_factories...\n   \u00e2\u0153\u201c processor_factories imported\n3. Testing DataProcessorFactoryManager...\n   \u00e2\u0153\u201c DataProcessorFactoryManager imported\n4. Creating factory manager...\n   \u00e2\u0153\u201c Factory manager created\n5. Testing factory capabilities...\n   \u00e2\u0153\u201c Available factories: ['excel', 'diggs', 'visualization']\n\n\u00f0\u0178\u017d\u2030 ALL IMPORTS SUCCESSFUL!\n\n=== Test Complete ===\nPress Enter to exit...",
+      "stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\.venv\\Lib\\site-packages\\cx_Freeze\\initscripts\\__startup__.py\", line 121, in run\n    module_init.run(f\"__main__{name}\")\n    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\.venv\\Lib\\site-packages\\cx_Freeze\\initscripts\\console.py\", line 25, in run\n    exec(code, main_globals)\n    ~~~~^^^^^^^^^^^^^^^^^^^^\n  File \"minimal_test.py\", line 70, in <module>\nEOFError: EOF when reading a line\n",
+      "log_file": "C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\error_logs\\import_test_20250714_200903.log"
+    }
+  },
+  "recommendations": [
+    "GUI may have launched successfully - timeout is normal for GUI apps"
+  ]
+}

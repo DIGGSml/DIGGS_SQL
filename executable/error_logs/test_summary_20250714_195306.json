@@ -1,0 +1,26 @@
+{
+  "timestamp": "2025-07-14T19:53:12.971336",
+  "executable_path": "C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\\DIGGS_Processor_Manager.exe",
+  "executable_exists": true,
+  "executable_size": 20992,
+  "test_results": {
+    "minimal": {
+      "success": false,
+      "return_code": 1,
+      "stdout": "Setting up import paths...\nExecutable directory: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\nAdded to path: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\nAdded to path: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\\src\nImporting factory manager...\n=== Import Debug Info ===\nPython executable: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\\DIGGS_Processor_Manager.exe\nFrozen: True\nCurrent working directory: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\n\nPython path:\n  0: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\\src\n  1: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\n  2: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\\lib\\library.zip\n  3: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\\lib\n\nFiles in executable directory (C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9):\n  diggs_processor.py\n  diggs_to_sqlite_importer.py\n  excel_processor.py\n  excel_template_generator.py\n  excel_to_sqlite_converter.py\n  processor_factories.py\n  processor_interfaces.py\n  sqlite_to_diggs_converter.py\n\n=== Attempting Imports ===\n1. Trying direct import...\n   [OK] processor_interfaces imported\n",
+      "stderr": "",
+      "log_file": "C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\error_logs\\minimal_test_20250714_195306.log",
+      "error_file": "C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\error_logs\\minimal_errors_20250714_195306.log"
+    },
+    "imports": {
+      "success": false,
+      "return_code": 1,
+      "stdout": "=== Minimal Import Test ===\nPython executable: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\\minimal_test.exe\nScript location: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\\lib\\library.zip\\__main__minimal_test.pyc\nCurrent directory: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\nFrozen: True\nAdded to path: C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\\lib\\library.zip\nPython path:\n  C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\\lib\\library.zip\n  C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\\lib\\library.zip\n  C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.9\\lib\n\n=== Testing Imports ===\n1. Testing processor_interfaces...\n",
+      "stderr": "Traceback (most recent call last):\n  File \"minimal_test.py\", line 30, in <module>\nModuleNotFoundError: No module named 'processor_interfaces'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\hosti\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python39\\site-packages\\cx_Freeze\\initscripts\\__startup__.py\", line 121, in run\n    module_init.run(f\"__main__{name}\")\n  File \"C:\\Users\\hosti\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python39\\site-packages\\cx_Freeze\\initscripts\\console.py\", line 25, in run\n    exec(code, main_globals)\n  File \"minimal_test.py\", line 52, in <module>\n  File \"C:\\Program Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.9_3.9.3568.0_x64__qbz5n2kfra8p0\\lib\\encodings\\cp1252.py\", line 19, in encode\n    return codecs.charmap_encode(input,self.errors,encoding_table)[0]\nUnicodeEncodeError: 'charmap' codec can't encode character '\\u274c' in position 2: character maps to <undefined>\n",
+      "log_file": "C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\error_logs\\import_test_20250714_195306.log"
+    }
+  },
+  "recommendations": [
+    "Check error logs for specific failure details"
+  ]
+}

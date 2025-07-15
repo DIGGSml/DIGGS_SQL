@@ -14,10 +14,22 @@ print(f"Current directory: {os.getcwd()}")
 print(f"Frozen: {hasattr(sys, 'frozen')}")
 
 # Add current directory to path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, current_dir)
+if hasattr(sys, 'frozen'):
+    # For cx_Freeze executable, modules are in same dir as executable
+    current_dir = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    # For development
+    current_dir = os.path.dirname(os.path.abspath(__file__))
 
+sys.path.insert(0, current_dir)
 print(f"Added to path: {current_dir}")
+
+# List available modules
+try:
+    py_files = [f for f in os.listdir(current_dir) if f.endswith('.py')]
+    print(f"Available .py files: {py_files[:5]}")
+except Exception as e:
+    print(f"Could not list files: {e}")
 print("Python path:")
 for p in sys.path[:5]:  # Show first 5 paths
     print(f"  {p}")

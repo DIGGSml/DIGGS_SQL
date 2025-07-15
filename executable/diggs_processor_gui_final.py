@@ -13,32 +13,36 @@ import os
 import sys
 from pathlib import Path
 import webbrowser
+import sqlite3
+import pandas as pd
 
 def setup_import_paths():
     """Setup import paths for executable environment"""
     if hasattr(sys, 'frozen'):
-        # Running as executable
-        # Get the actual executable directory (not the library.zip location)
-        if hasattr(sys, '_MEIPASS'):
-            # PyInstaller
-            exe_dir = sys._MEIPASS
-        else:
-            # cx_Freeze - get parent of lib directory
-            script_dir = os.path.dirname(os.path.abspath(sys.executable))
-            exe_dir = script_dir
+        # Running as executable - cx_Freeze specific
+        exe_dir = os.path.dirname(os.path.abspath(sys.executable))
         
         print(f"Executable directory: {exe_dir}")
+        print(f"Current sys.path: {sys.path[:3]}")
         
-        # Add executable directory to path (where our modules are)
+        # For cx_Freeze, modules are in the same directory as the executable
+        # Add executable directory to the beginning of sys.path
         if exe_dir not in sys.path:
             sys.path.insert(0, exe_dir)
             print(f"Added to path: {exe_dir}")
         
-        # Also try src subdirectory if it exists
+        # Also check src subdirectory
         src_dir = os.path.join(exe_dir, "src")
         if os.path.exists(src_dir) and src_dir not in sys.path:
             sys.path.insert(0, src_dir)
-            print(f"Added to path: {src_dir}")
+            print(f"Added src to path: {src_dir}")
+        
+        # List available .py files in executable directory
+        try:
+            py_files = [f for f in os.listdir(exe_dir) if f.endswith('.py')]
+            print(f"Available .py files: {py_files[:5]}")  # Show first 5
+        except Exception as e:
+            print(f"Could not list files: {e}")
             
         return exe_dir
     else:
@@ -213,6 +217,7 @@ class DiggsProcessorGUI:
         self.create_convert_tab()
         self.create_export_tab()
         self.create_import_tab()
+        self.create_data_viewer_tab()
         self.create_about_tab()
         
         # Progress frame
@@ -353,6 +358,90 @@ class DiggsProcessorGUI:
         # Import button
         ttk.Button(import_frame, text="Import DIGGS XML", command=self.import_diggs).grid(row=4, column=0, pady=20)
     
+    def create_data_viewer_tab(self):
+        """Create data viewer tab with table display and filters"""
+        viewer_frame = ttk.Frame(self.notebook, padding="10")
+        self.notebook.add(viewer_frame, text="Data Viewer")
+        
+        # Configure grid weights
+        viewer_frame.columnconfigure(0, weight=1)
+        viewer_frame.rowconfigure(3, weight=1)
+        
+        # Database file selection
+        ttk.Label(viewer_frame, text="SQLite Database:", style='Header.TLabel').grid(row=0, column=0, sticky=tk.W, pady=(0, 5))
+        
+        db_frame = ttk.Frame(viewer_frame)
+        db_frame.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
+        db_frame.columnconfigure(0, weight=1)
+        
+        self.viewer_db_path = tk.StringVar()
+        ttk.Entry(db_frame, textvariable=self.viewer_db_path).grid(row=0, column=0, sticky=(tk.W, tk.E), padx=(0, 5))
+        ttk.Button(db_frame, text="Browse", command=self.browse_viewer_database).grid(row=0, column=1)
+        ttk.Button(db_frame, text="Load Data", command=self.load_database_data).grid(row=0, column=2, padx=(5, 0))
+        
+        # Filters frame
+        filters_frame = ttk.LabelFrame(viewer_frame, text="Filters", padding="5")
+        filters_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
+        filters_frame.columnconfigure(1, weight=1)
+        filters_frame.columnconfigure(3, weight=1)
+        
+        # Table dropdown
+        ttk.Label(filters_frame, text="Table:").grid(row=0, column=0, padx=(0, 5))
+        self.table_var = tk.StringVar()
+        self.table_combo = ttk.Combobox(filters_frame, textvariable=self.table_var, state="readonly")
+        self.table_combo.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(0, 10))
+        self.table_combo.bind('<<ComboboxSelected>>', self.on_table_selected)
+        
+        # Column filter dropdown
+        ttk.Label(filters_frame, text="Filter Column:").grid(row=0, column=2, padx=(0, 5))
+        self.filter_column_var = tk.StringVar()
+        self.filter_column_combo = ttk.Combobox(filters_frame, textvariable=self.filter_column_var, state="readonly")
+        self.filter_column_combo.grid(row=0, column=3, sticky=(tk.W, tk.E), padx=(0, 10))
+        self.filter_column_combo.bind('<<ComboboxSelected>>', self.on_filter_column_selected)
+        
+        # Filter value dropdown
+        ttk.Label(filters_frame, text="Filter Value:").grid(row=1, column=0, padx=(0, 5), pady=(5, 0))
+        self.filter_value_var = tk.StringVar()
+        self.filter_value_combo = ttk.Combobox(filters_frame, textvariable=self.filter_value_var)
+        self.filter_value_combo.grid(row=1, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(5, 0))
+        
+        # Search box
+        ttk.Label(filters_frame, text="Search:").grid(row=1, column=2, padx=(0, 5), pady=(5, 0))
+        self.search_var = tk.StringVar()
+        search_entry = ttk.Entry(filters_frame, textvariable=self.search_var)
+        search_entry.grid(row=1, column=3, sticky=(tk.W, tk.E), padx=(0, 10), pady=(5, 0))
+        search_entry.bind('<KeyRelease>', self.on_search_changed)
+        
+        # Filter buttons
+        button_frame = ttk.Frame(filters_frame)
+        button_frame.grid(row=2, column=0, columnspan=4, pady=(10, 0))
+        
+        ttk.Button(button_frame, text="Apply Filter", command=self.apply_filters).grid(row=0, column=0, padx=(0, 5))
+        ttk.Button(button_frame, text="Clear Filters", command=self.clear_filters).grid(row=0, column=1, padx=(0, 5))
+        ttk.Button(button_frame, text="Refresh", command=self.refresh_data).grid(row=0, column=2, padx=(0, 5))
+        
+        # Table display frame
+        table_frame = ttk.LabelFrame(viewer_frame, text="Data", padding="5")
+        table_frame.grid(row=3, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(10, 0))
+        table_frame.columnconfigure(0, weight=1)
+        table_frame.rowconfigure(0, weight=1)
+        
+        # Create Treeview for table display
+        self.tree_frame = ttk.Frame(table_frame)
+        self.tree_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        self.tree_frame.columnconfigure(0, weight=1)
+        self.tree_frame.rowconfigure(0, weight=1)
+        
+        # Info label
+        self.info_label = ttk.Label(table_frame, text="Select a database to view data")
+        self.info_label.grid(row=1, column=0, pady=(5, 0))
+        
+        # Initialize variables
+        self.current_db_path = None
+        self.current_data = None
+        self.filtered_data = None
+        self.tree = None
+    
     def create_about_tab(self):
         """Create about/help tab"""
         about_frame = ttk.Frame(self.notebook, padding="10")
@@ -369,6 +458,7 @@ This application provides a complete workflow for geotechnical data processing:
 • Excel to SQLite Conversion - Transform Excel data into normalized database
 • SQLite to DIGGS Export - Generate DIGGS 2.6 compliant XML files
 • DIGGS XML Import - Import existing DIGGS files into SQLite database
+• Data Viewer - Browse, filter, and search SQLite database tables with interactive interface
 
 Built using the Abstract Factory Design Pattern for extensible, maintainable code.
         """
@@ -616,6 +706,245 @@ Built using the Abstract Factory Design Pattern for extensible, maintainable cod
                 messagebox.showerror("Error", f"Error during import: {str(e)}")
         
         self.run_in_thread(worker)
+    
+    # Data viewer methods
+    def browse_viewer_database(self):
+        """Browse for database file to view"""
+        filename = filedialog.askopenfilename(
+            filetypes=[("SQLite database", "*.db"), ("All files", "*.*")]
+        )
+        if filename:
+            self.viewer_db_path.set(filename)
+    
+    def load_database_data(self):
+        """Load database and populate table dropdown"""
+        db_path = self.viewer_db_path.get()
+        if not db_path:
+            messagebox.showerror("Error", "Please select a database file")
+            return
+        
+        if not os.path.exists(db_path):
+            messagebox.showerror("Error", "Database file does not exist")
+            return
+        
+        try:
+            self.current_db_path = db_path
+            
+            # Connect to database and get table names
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+            tables = [row[0] for row in cursor.fetchall()]
+            conn.close()
+            
+            if not tables:
+                messagebox.showwarning("Warning", "No tables found in database")
+                return
+            
+            # Populate table dropdown
+            self.table_combo['values'] = tables
+            self.table_var.set(tables[0])  # Select first table
+            
+            # Clear other dropdowns
+            self.filter_column_combo['values'] = []
+            self.filter_value_combo['values'] = []
+            self.filter_column_var.set('')
+            self.filter_value_var.set('')
+            self.search_var.set('')
+            
+            # Load first table
+            self.on_table_selected(None)
+            
+            self.log_message(f"Loaded database: {os.path.basename(db_path)} ({len(tables)} tables)")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load database: {str(e)}")
+            self.log_message(f"Error loading database: {str(e)}", "ERROR")
+    
+    def on_table_selected(self, event):
+        """Handle table selection"""
+        if not self.current_db_path or not self.table_var.get():
+            return
+        
+        try:
+            table_name = self.table_var.get()
+            
+            # Load table data
+            conn = sqlite3.connect(self.current_db_path)
+            self.current_data = pd.read_sql_query(f"SELECT * FROM `{table_name}`", conn)
+            conn.close()
+            
+            if self.current_data.empty:
+                self.info_label.config(text=f"Table '{table_name}' is empty")
+                self.create_empty_tree()
+                return
+            
+            # Populate column filter dropdown
+            columns = list(self.current_data.columns)
+            self.filter_column_combo['values'] = columns
+            self.filter_column_var.set('')
+            self.filter_value_var.set('')
+            
+            # Reset filtered data
+            self.filtered_data = self.current_data.copy()
+            
+            # Update display
+            self.update_tree_display()
+            
+            self.info_label.config(text=f"Table: {table_name} | Rows: {len(self.current_data)} | Columns: {len(columns)}")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load table data: {str(e)}")
+            self.log_message(f"Error loading table: {str(e)}", "ERROR")
+    
+    def on_filter_column_selected(self, event):
+        """Handle filter column selection"""
+        if not hasattr(self, 'current_data') or self.current_data is None:
+            return
+        
+        column = self.filter_column_var.get()
+        if not column:
+            return
+        
+        try:
+            # Get unique values for the selected column
+            unique_values = sorted(self.current_data[column].dropna().unique().astype(str))
+            self.filter_value_combo['values'] = unique_values
+            self.filter_value_var.set('')
+            
+        except Exception as e:
+            self.log_message(f"Error loading filter values: {str(e)}", "ERROR")
+    
+    def on_search_changed(self, event):
+        """Handle search text change with delay"""
+        # Cancel previous search timer if exists
+        if hasattr(self, 'search_timer'):
+            self.root.after_cancel(self.search_timer)
+        
+        # Set new timer for 500ms delay
+        self.search_timer = self.root.after(500, self.apply_filters)
+    
+    def apply_filters(self):
+        """Apply all filters and update display"""
+        if not hasattr(self, 'current_data') or self.current_data is None:
+            return
+        
+        try:
+            # Start with original data
+            filtered_data = self.current_data.copy()
+            
+            # Apply column filter
+            filter_column = self.filter_column_var.get()
+            filter_value = self.filter_value_var.get()
+            
+            if filter_column and filter_value:
+                filtered_data = filtered_data[filtered_data[filter_column].astype(str) == filter_value]
+            
+            # Apply search filter (search across all columns)
+            search_text = self.search_var.get().strip()
+            if search_text:
+                # Create a mask for rows that contain the search text in any column
+                mask = filtered_data.astype(str).apply(
+                    lambda x: x.str.contains(search_text, case=False, na=False)
+                ).any(axis=1)
+                filtered_data = filtered_data[mask]
+            
+            self.filtered_data = filtered_data
+            self.update_tree_display()
+            
+            # Update info label
+            table_name = self.table_var.get()
+            total_rows = len(self.current_data)
+            filtered_rows = len(self.filtered_data)
+            
+            if filtered_rows < total_rows:
+                self.info_label.config(text=f"Table: {table_name} | Showing: {filtered_rows} of {total_rows} rows")
+            else:
+                self.info_label.config(text=f"Table: {table_name} | Rows: {total_rows}")
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to apply filters: {str(e)}")
+            self.log_message(f"Error applying filters: {str(e)}", "ERROR")
+    
+    def clear_filters(self):
+        """Clear all filters"""
+        self.filter_column_var.set('')
+        self.filter_value_var.set('')
+        self.search_var.set('')
+        
+        if hasattr(self, 'current_data') and self.current_data is not None:
+            self.filtered_data = self.current_data.copy()
+            self.update_tree_display()
+            
+            table_name = self.table_var.get()
+            self.info_label.config(text=f"Table: {table_name} | Rows: {len(self.current_data)}")
+    
+    def refresh_data(self):
+        """Refresh the current table data"""
+        if self.table_var.get():
+            self.on_table_selected(None)
+    
+    def create_empty_tree(self):
+        """Create empty tree view"""
+        if self.tree:
+            self.tree.destroy()
+        
+        self.tree = ttk.Treeview(self.tree_frame)
+        self.tree.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Add scrollbars
+        v_scroll = ttk.Scrollbar(self.tree_frame, orient="vertical", command=self.tree.yview)
+        v_scroll.grid(row=0, column=1, sticky=(tk.N, tk.S))
+        self.tree.configure(yscrollcommand=v_scroll.set)
+        
+        h_scroll = ttk.Scrollbar(self.tree_frame, orient="horizontal", command=self.tree.xview)
+        h_scroll.grid(row=1, column=0, sticky=(tk.W, tk.E))
+        self.tree.configure(xscrollcommand=h_scroll.set)
+    
+    def update_tree_display(self):
+        """Update the tree view with current filtered data"""
+        if not hasattr(self, 'filtered_data') or self.filtered_data is None:
+            return
+        
+        # Clear existing tree
+        if self.tree:
+            self.tree.destroy()
+        
+        # Create new tree
+        columns = list(self.filtered_data.columns)
+        self.tree = ttk.Treeview(self.tree_frame, columns=columns, show='tree headings', height=15)
+        self.tree.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Configure column 0 (tree column)
+        self.tree.heading('#0', text='Row')
+        self.tree.column('#0', width=50, minwidth=50)
+        
+        # Configure data columns
+        for col in columns:
+            self.tree.heading(col, text=col)
+            # Set column width based on content
+            max_width = max(len(col) * 8, 100)  # Minimum 100 pixels
+            self.tree.column(col, width=max_width, minwidth=50)
+        
+        # Add scrollbars
+        v_scroll = ttk.Scrollbar(self.tree_frame, orient="vertical", command=self.tree.yview)
+        v_scroll.grid(row=0, column=1, sticky=(tk.N, tk.S))
+        self.tree.configure(yscrollcommand=v_scroll.set)
+        
+        h_scroll = ttk.Scrollbar(self.tree_frame, orient="horizontal", command=self.tree.xview)
+        h_scroll.grid(row=1, column=0, sticky=(tk.W, tk.E))
+        self.tree.configure(xscrollcommand=h_scroll.set)
+        
+        # Populate with data (limit to first 1000 rows for performance)
+        max_rows = min(1000, len(self.filtered_data))
+        for i, (index, row) in enumerate(self.filtered_data.head(max_rows).iterrows()):
+            # Convert all values to strings and handle NaN/None
+            values = [str(val) if pd.notna(val) else '' for val in row]
+            self.tree.insert('', 'end', text=str(index), values=values)
+        
+        # Show warning if data was truncated
+        if len(self.filtered_data) > max_rows:
+            self.info_label.config(text=f"{self.info_label.cget('text')} (Showing first {max_rows} rows)")
 
 def main():
     """Main entry point"""

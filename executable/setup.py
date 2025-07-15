@@ -27,7 +27,7 @@ build_exe_options = {
     "packages": [
         "tkinter", "sqlite3", "xml", "uuid", "datetime", 
         "pandas", "numpy", "openpyxl", "threading", "webbrowser",
-        "pathlib", "os", "sys"
+        "pathlib", "os", "sys", "matplotlib", "seaborn", "PIL"
     ],
     "include_files": [
         # Include assets directory
@@ -41,12 +41,13 @@ build_exe_options = {
         (str(src_dir / "sqlite_to_diggs_converter.py"), "sqlite_to_diggs_converter.py"),
         (str(src_dir / "diggs_to_sqlite_importer.py"), "diggs_to_sqlite_importer.py"),
         (str(src_dir / "excel_template_generator.py"), "excel_template_generator.py"),
+        (str(src_dir / "visualization_processor.py"), "visualization_processor.py"),
         # Also include in src subdirectory for compatibility
         (str(src_dir), "src"),
     ],
     "excludes": [
         # Exclude unnecessary packages to reduce size
-        "matplotlib", "scipy", "PIL", "PyQt5", "PyQt6",
+        "scipy", "PyQt5", "PyQt6",
         "tkinter.test", "test", "unittest", "doctest"
     ],
     "optimize": 2,  # Optimize bytecode

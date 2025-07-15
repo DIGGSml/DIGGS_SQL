@@ -1,0 +1,23 @@
+{
+  "timestamp": "2025-07-14T19:55:24.853224",
+  "executable_path": "C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\build\\exe.win-amd64-3.13\\DIGGS_Processor_Manager.exe",
+  "executable_exists": true,
+  "executable_size": 20992,
+  "test_results": {
+    "minimal": {
+      "success": false,
+      "return_code": "TIMEOUT",
+      "stdout": "",
+      "stderr": "",
+      "error": "Timeout after 15 seconds",
+      "error_file": "C:\\Users\\hosti\\Documents\\GitHub\\DIGGS_SQL\\executable\\error_logs\\minimal_errors_20250714_195509.log"
+    },
+    "imports": {
+      "success": false,
+      "error": "write() argument must be str, not None"
+    }
+  },
+  "recommendations": [
+    "GUI may have launched successfully - timeout is normal for GUI apps"
+  ]
+}
