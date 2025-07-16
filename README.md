@@ -266,7 +266,7 @@ python diggs_processor_gui.py
 # Or build standalone executable
 build_executable.bat
 ```
-
+atfer running the build_executable.bat there will be a "build" folder created in the executable folder. Navigate to the DIGGS_Processor_Manager exe to open the program. There is also an exe in the same folder called "minimal test" that will try to diagnose any errors that occur durring file opening. 
 ### **GUI Features**
 - **Professional Interface** - Tabbed interface with progress tracking
 - **Drag & Drop Support** - Easy file handling
