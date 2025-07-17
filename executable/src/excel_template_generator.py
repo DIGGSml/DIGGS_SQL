@@ -1,6 +1,15 @@
 import pandas as pd
 import os
 from datetime import datetime
+from openpyxl import Workbook
+from openpyxl.worksheet.datavalidation import DataValidation
+try:
+    from geology_library import GeologyLibrary
+except ImportError:
+    # Fallback if geology_library is not available
+    class GeologyLibrary:
+        def get_standard_geology_types(self):
+            return [{'strataName': 'Clay'}, {'strataName': 'Sand'}, {'strataName': 'Silt'}]
 
 class ExcelTemplateGenerator:
     """Generate Excel template files based on DIGGS SQLite schema"""
@@ -295,12 +304,18 @@ class ExcelTemplateGenerator:
         print(f"Creating blank Excel template: {output_path}")
         
         with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+            # Create Geology_Library sheet first
+            self._create_geology_library_sheet(writer)
+            
             for sheet_name, sheet_data in self.template_structure.items():
                 # Create empty DataFrame with just headers
                 df = pd.DataFrame(columns=sheet_data['columns'])
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
                 
                 print(f"  Created sheet: {sheet_name} ({len(sheet_data['columns'])} columns)")
+            
+            # Add dropdowns to sheets with Geo_ID columns
+            self._add_geology_dropdowns(writer)
         
         print(f"Blank template created successfully!")
     
@@ -309,6 +324,9 @@ class ExcelTemplateGenerator:
         print(f"Creating sample Excel template: {output_path}")
         
         with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+            # Create Geology_Library sheet first
+            self._create_geology_library_sheet(writer)
+            
             for sheet_name, sheet_data in self.template_structure.items():
                 # Create DataFrame with sample data if available, otherwise just headers
                 if sheet_data['sample_data']:
@@ -320,6 +338,9 @@ class ExcelTemplateGenerator:
                 
                 sample_count = len(sheet_data['sample_data'])
                 print(f"  Created sheet: {sheet_name} ({len(sheet_data['columns'])} columns, {sample_count} sample rows)")
+            
+            # Add dropdowns to sheets with Geo_ID columns
+            self._add_geology_dropdowns(writer)
         
         print(f"Sample template created successfully!")
     
@@ -368,6 +389,72 @@ class ExcelTemplateGenerator:
         doc_df = pd.DataFrame(documentation)
         doc_df.to_excel(output_path, sheet_name='Documentation', index=False)
         print(f"Documentation created: {output_path}")
+    
+    def _create_geology_library_sheet(self, writer):
+        """Create a Geology_Library sheet with standardized geology types"""
+        geology_lib = GeologyLibrary()
+        geology_types = geology_lib.get_standard_geology_types()
+        
+        # Create DataFrame with geology data
+        geology_df = pd.DataFrame(geology_types)
+        
+        # Add _Geo_ID column
+        geology_df.insert(0, '_Geo_ID', range(1, len(geology_df) + 1))
+        
+        # Add missing columns with defaults
+        for col in ['reference', 'mapID', 'memberGroup', 'tertComp', 'addNote']:
+            if col not in geology_df.columns:
+                geology_df[col] = ''
+        
+        # Reorder columns to match database structure
+        column_order = ['_Geo_ID', 'reference', 'mapID', 'strataName', 'depositType', 
+                       'epoch', 'memberGroup', 'primComp', 'secComp', 'tertComp', 'addNote']
+        geology_df = geology_df.reindex(columns=column_order, fill_value='')
+        
+        # Add reference and mapID values
+        geology_df['reference'] = 'Standard Geology Library'
+        geology_df['mapID'] = geology_df['_Geo_ID'].apply(lambda x: f'STD_{x:03d}')
+        geology_df['addNote'] = 'Standard geological classification'
+        
+        geology_df.to_excel(writer, sheet_name='Geology_Library', index=False)
+        print(f"  Created Geology_Library sheet with {len(geology_df)} geology types")
+    
+    def _add_geology_dropdowns(self, writer):
+        """Add geology dropdowns to sheets with Geo_ID columns"""
+        sheets_with_geo_id = ['Samples', 'FieldStrata', 'FinalStrata']
+        
+        for sheet_name in sheets_with_geo_id:
+            if sheet_name in writer.sheets:
+                worksheet = writer.sheets[sheet_name]
+                
+                # Find the Geo_ID column
+                geo_id_col = None
+                for col_idx, cell in enumerate(worksheet[1], 1):
+                    if cell.value == 'Geo_ID':
+                        geo_id_col = col_idx
+                        break
+                
+                if geo_id_col:
+                    # Create data validation for geology dropdown
+                    # Reference the strataName column in Geology_Library sheet
+                    geology_range = "Geology_Library!$D$2:$D$100"  # Column D is strataName
+                    
+                    dv = DataValidation(
+                        type="list",
+                        formula1=geology_range,
+                        showDropDown=True,
+                        showErrorMessage=True,
+                        errorTitle="Invalid Geology Type",
+                        error="Please select a geology type from the dropdown list"
+                    )
+                    
+                    # Apply validation to the entire column (rows 2-1000)
+                    col_letter = worksheet.cell(row=1, column=geo_id_col).column_letter
+                    range_string = f"{col_letter}2:{col_letter}1000"
+                    dv.add(range_string)
+                    worksheet.add_data_validation(dv)
+                    
+                    print(f"  Added geology dropdown to {sheet_name} column {col_letter}")
 
 def main():
     import os

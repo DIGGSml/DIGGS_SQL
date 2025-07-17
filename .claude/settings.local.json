@@ -20,7 +20,8 @@
       "Bash(./DIGGS_Processor_Manager.exe)",
       "Bash(\".\\minimal_test.exe\")",
       "Bash(rd:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }
