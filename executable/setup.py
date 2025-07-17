@@ -27,7 +27,7 @@ build_exe_options = {
     "packages": [
         "tkinter", "sqlite3", "xml", "uuid", "datetime", 
         "pandas", "numpy", "openpyxl", "threading", "webbrowser",
-        "pathlib", "os", "sys", "matplotlib", "seaborn", "PIL"
+        "pathlib", "os", "sys", "matplotlib", "PIL"
     ],
     "include_files": [
         # Include assets directory
@@ -47,7 +47,8 @@ build_exe_options = {
     ],
     "excludes": [
         # Exclude unnecessary packages to reduce size
-        "scipy", "PyQt5", "PyQt6",
+        "scipy", "PyQt5", "PyQt6", "seaborn", "ipywidgets", "jupyter_client",
+        "zmq", "pyzmq", "ipykernel", "jupyter_core",
         "tkinter.test", "test", "unittest", "doctest"
     ],
     "optimize": 2,  # Optimize bytecode

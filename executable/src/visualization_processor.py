@@ -1,7 +1,6 @@
 import sqlite3
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -9,6 +8,11 @@ import numpy as np
 from typing import Dict, Any, Optional, List, Tuple
 from processor_interfaces import DataProcessor
 import os
+
+# Skip seaborn import to avoid pyzmq dependency in executable
+# Use matplotlib styling instead
+plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')
+sns = None
 
 class DatabaseVisualizationProcessor(DataProcessor):
     """Interactive visualization tool for SQLite geotechnical databases"""
