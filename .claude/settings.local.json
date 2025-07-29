@@ -21,7 +21,8 @@
       "Bash(\".\\minimal_test.exe\")",
       "Bash(rd:*)",
       "Bash(powershell:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(gh:*)"
     ],
     "deny": []
   }

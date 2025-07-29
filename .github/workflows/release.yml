@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd executable
+        pip install -r requirements.txt
+        pip install cx_Freeze
+    
+    - name: Build executable
+      run: |
+        cd executable
+        python setup.py build
+    
+    - name: Create release archive
+      run: |
+        cd executable
+        Compress-Archive -Path build\* -DestinationPath DIGGS_Processor_Manager_Windows.zip
+    
+    - name: Upload release asset
+      uses: actions/upload-artifact@v4
+      with:
+        name: DIGGS-Processor-Manager-Windows
+        path: executable\DIGGS_Processor_Manager_Windows.zip
+
+  create-release:
+    needs: build-windows
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download Windows build
+      uses: actions/download-artifact@v4
+      with:
+        name: DIGGS-Processor-Manager-Windows
+        path: ./
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          DIGGS_Processor_Manager_Windows.zip
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
