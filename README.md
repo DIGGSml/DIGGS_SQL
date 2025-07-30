@@ -5,6 +5,9 @@ This is an ongoing project with the Geo Institute to build an open source databa
 
 **Database Schema:** https://dbdiagram.io/d/DIGGS-SQL-Structure-668dcbd19939893dae7ebb48
 
+For the latest downloadable release of the Executable Program: https://github.com/geotechnick/DIGGS-Data-Processor-exe/releases/tag/v1.0.0
+For the latest downloadable release of the source code: https://github.com/geotechnick/DIGGS_SQL/releases/tag/v1.0.0
+
 ## Architecture
 
 The project implements the **Abstract Factory Design Pattern** for modular, extensible data processing:
