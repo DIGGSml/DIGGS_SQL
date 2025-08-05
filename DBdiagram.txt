@@ -1,0 +1,496 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+Table _Rig {
+  _rigID text [primary key]
+  _rigDescription text
+  hammerType text
+  hammerEfficiency real
+  miscID text
+}
+
+Table _Project {
+  _Project_ID text [primary key]
+  _Client_ID text
+  projectName text
+  projectNumber text
+  projectCountry text
+  projectState text
+  projectCounty text
+  coordinateDatum text
+}
+
+Table _Client {
+  _Client_ID text [primary key]
+  clientName text
+  clientContact text
+}
+
+Table _HoleInfo {
+  _holeID text [primary key]
+  _rigID text
+  _Project_ID text
+  holeName text
+  holeType text
+  topLatitude real
+  topLongitude real
+  groundSurface real
+  azimuth real
+  angle real
+  bottomDepth real
+  timeInterval_start timestamp
+  timeInterval_end timestamp
+  hole_diameter real
+  termination text
+}
+
+Table _waterLevels {
+  _holeID text
+  waterDepth real
+  TimeInterval_start timestamp
+  TimeInterval_end timestamp
+}
+
+Table _caveIn {
+  _holeID text
+  caveInDepth real
+  TimeInterval_start timestamp
+  TimeInterval_end timestamp
+}
+
+Table _Samples {
+  _Sample_ID text [primary key]
+  _holeID text
+  sampleName text
+  pos_topDepth real
+  pos_bottomDepth real
+  sampleMethod text
+}
+
+Table _SPT{
+  _Sample_ID text
+  _Method_ID text
+  samplerLength real
+  samplerInternalDiameter real
+  depthCasing real
+  totalPenetration real
+  blowCount_index1 integer
+  penetration_index1 real
+  blowCount_index2 integer
+  penetration_index2 real
+  blowCount_index3 integer
+  penetration_index3 real
+  blowCount_index4 integer
+  penetration_index4 real
+  recovery real
+}
+
+Table MoistureContent {
+  _Sample_ID text
+  _Method_ID text
+  moistureContent real
+}
+
+Table StaticConePenetrationTest {
+  _Sample_ID text
+  _Method_ID text
+  penetrationRate real
+  tipStress_tsf real
+  sleeveStress_tsf real
+  porePressure_tsf real
+}
+
+Table Cone_Info {
+  _rigID text
+  penetrometerType text
+  distanceTipToSleeve real
+  frictionReducer text
+  frictionSleeveArea text
+  netAreaRatioCorrection text
+  piezoconeType text
+  pushRodType text
+  tipCapacity real
+  sleeveCapacity real
+  surfaceCapacity real
+  tipApexAngle real
+  tipArea real
+  Nkt real
+}
+
+Table TestMethod {
+  _Method_ID text [primary key]
+  methodName text
+  governingBody text
+  units text
+  modification text
+}
+
+Table AtterbergLimits {
+  _Sample_ID text
+  _Method_ID text
+  plasticLimit real
+  liquidLimit real
+  plasticityIndex real
+}
+
+Table Gradation {
+  _Sample_ID text
+  _Method_ID text
+  retNo4 real
+  retNo10 real
+  retNo20 real
+  retNo40 real
+  retNo60 real
+  retNo100 real
+  retNo140 real
+  retNo200 real
+}
+
+Table Consolidation {
+  _Sample_ID text
+  _Method_ID text
+  _Cons_Load_ID text
+  initialVoidRatio real
+  compressionIndex real
+  recompressionIndex real
+  overburdenPressure real
+  preconsolidationPressure real
+}
+
+Table ConsolidationLoading{
+  _Cons_Load_ID text
+  loadIncrement real
+  pressure real
+  Cv real
+  Calpha real
+}
+
+Table Geology_Library {
+  _Geo_ID text [primary key]
+  reference text
+  mapID text
+  strataName text
+  depositType text
+  epoch text
+  memberGroup text 
+  primComp text
+  secComp text
+  tertComp text 
+  addNote text
+}
+
+Table Field_Strata {
+  _holeID text
+  _Geo_ID text
+  soilStrength text
+  color text
+  primaryComp text
+  secondaryComp text
+  secondaryCompMod text
+  organicContent real
+  visualMoisture text
+  soilDesc text
+  addNote text
+  pos_topDepth real
+  pos_bottomDepth real
+}
+
+Table Final_Strata {
+  _holeID text
+  _Geo_ID text
+  soilStrength text
+  color text
+  primaryComp text
+  secondaryComp text
+  secondaryCompMod text
+  organicContent real
+  visualMoisture text
+  soilDesc text
+  addNote text
+  pos_topDepth real
+  pos_bottomDepth real
+}
+
+Table WellConstr {
+  _holeID text
+  material text
+  pos_topDepth real
+  pos_bottomDepth real
+}
+
+Table RockCoring {
+  _Sample_ID text
+  _Method_ID text
+  _CoringMethod_ID text
+  _Geo_ID text
+  rockType text
+  color text
+  weathering text
+  texture text
+  relStrength text
+  bedding text
+  miscDesc text
+  discontinuity text
+  fractureType text
+  degreeFracture real
+  width text
+  surfaceRoughness text
+  recovery real
+  GSI_desc text
+  surfaceDescription text
+  RQD real
+  soilLens text
+}
+
+Table CoringMethod {
+  _CoringMethod_ID text [primary key]
+  coreSize text
+  bitSize real
+  bitType text
+}
+
+Table DrillMethod {
+  _holeID text
+  drillMethod text
+  rodType text
+  additives text
+  misc text
+}
+
+Table fieldSoilDesc {
+  _Sample_ID text
+  _Geo_ID text
+  soilStrength text
+  color text
+  primaryComp text
+  secondaryComp text
+  secondaryCompMod text
+  organicContent real
+  visualMoisture text
+  soilDesc text
+  addNote text
+}
+
+Table WellReadings {
+  _holeID text
+  reading real
+  temp real
+  TimeInterval timestamp
+}
+
+Table riser {
+  _holeID text
+  pipeMaterial text
+  pipeSchedule text
+  pipeCoupling text
+  screenType text
+  pos_topDepth real
+  pos_bottomDepth real
+}
+
+Table piezometer {
+  _holeID text
+  piezoType text
+  pos_topDepth real
+  pos_bottomDepth real
+}
+
+Table uuTest {
+  _Sample_ID text
+  _Method_ID text
+  uuSample real
+  intWC real
+  intDryDen real
+  intSat real
+  intVoid real
+  testWC real
+  testDryDen real
+  testSat real
+  testVoid real
+  strainRate real
+  backPres real
+  cellPres real
+  failStress real
+  ultStress real
+  sigma1 real
+  sigma3 real
+  totPhi real
+  totC real
+  effPhi real
+  effC real
+}
+
+Table cuTest {
+  _Sample_ID text
+  _Method_ID text
+  cuSample real
+  intWC real
+  intDryDen real
+  intSat real
+  intVoid real
+  testWC real
+  testDryDen real
+  testSat real
+  testVoid real
+  strainRate real
+  backPres real
+  cellPres real
+  failStress real
+  failPorePres real
+  ultStress real
+  ultPorePres real
+  sigma1 real
+  sigma3 real
+  totPhi real
+  totC real
+  effPhi real
+  effC real
+}
+
+Table dsTest {
+  _Sample_ID text
+  _Method_ID text
+  dsSample real
+  intWC real
+  intDryDen real
+  intSat real
+  intVoid real
+  testWC real
+  testDryDen real
+  testSat real
+  testVoid real
+  strainRate real
+  failStress real
+  failDisp real
+  ultStress real
+  ultDisp real
+  totPhi real
+  totC real
+  effPhi real
+  effC real
+}
+
+Table Perm {
+  _Sample_ID text
+  _Method_ID text
+  permKv real
+  permKh real
+  confiningPres real
+  backPres real
+}
+
+Table Proctor {
+  _Sample_ID text
+  _Method_ID text
+  sampleNumber real
+  maxDryDensity real
+  optimumMoisture real
+  dryDensity real
+  moistureContent real
+}
+
+Table CBR {
+  _Sample_ID text
+  _Method_ID text
+  sampleNumber real
+  penetrationID text
+  penetration real
+}
+
+Table 200wash {
+  _Sample_ID text
+  _Method_ID text
+  passing200 real
+}
+
+Table Hydrometer {
+  _Sample_ID text
+  _Method_ID text
+  percentClay real
+  percentSilt real
+}
+
+Table Pocket_Pen {
+  _Sample_ID text
+  _Method_ID text
+  reading real
+}
+
+Table torvane {
+  _Sample_ID text
+  _Method_ID text
+  reading real
+}
+
+Table dilatometer {
+  _Sample_ID text
+  _Method_ID text
+  reading1 real
+  reading2 real
+}
+
+Table pressuremeter {
+  _Sample_ID text
+  _Method_ID text
+  pressure real
+  volume real
+}
+
+Ref: _waterLevels._holeID > _HoleInfo._holeID
+Ref: _HoleInfo._rigID > _Rig._rigID
+Ref: _HoleInfo._Project_ID > _Project._Project_ID
+Ref: _Samples._holeID > _HoleInfo._holeID
+Ref: _SPT._Sample_ID> _Samples._Sample_ID
+Ref: StaticConePenetrationTest._Sample_ID> _Samples._Sample_ID
+Ref: StaticConePenetrationTest._Method_ID> TestMethod._Method_ID
+Ref: _SPT._Method_ID> TestMethod._Method_ID
+Ref: AtterbergLimits._Method_ID> TestMethod._Method_ID
+Ref: Consolidation._Method_ID> TestMethod._Method_ID
+Ref: MoistureContent._Method_ID> TestMethod._Method_ID
+Ref: Gradation._Method_ID> TestMethod._Method_ID
+Ref: AtterbergLimits._Sample_ID> _Samples._Sample_ID
+Ref: Consolidation._Sample_ID> _Samples._Sample_ID
+Ref: MoistureContent._Sample_ID> _Samples._Sample_ID
+Ref: Gradation._Sample_ID> _Samples._Sample_ID
+Ref: ConsolidationLoading._Cons_Load_ID > Consolidation._Cons_Load_ID
+Ref: WellConstr._holeID > _HoleInfo._holeID
+Ref: RockCoring._Sample_ID > _Samples._Sample_ID
+Ref: RockCoring._Method_ID > TestMethod._Method_ID
+Ref: fieldSoilDesc._Sample_ID > _Samples._Sample_ID
+Ref: WellReadings._holeID > _HoleInfo._holeID
+Ref: riser._holeID > _HoleInfo._holeID
+Ref: piezometer._holeID > _HoleInfo._holeID
+Ref: uuTest._Sample_ID > _Samples._Sample_ID
+Ref: uuTest._Method_ID > TestMethod._Method_ID
+Ref: cuTest._Sample_ID > _Samples._Sample_ID
+Ref: cuTest._Method_ID > TestMethod._Method_ID
+Ref: dsTest._Sample_ID > _Samples._Sample_ID
+Ref: dsTest._Method_ID > TestMethod._Method_ID
+Ref: Perm._Sample_ID > _Samples._Sample_ID
+Ref: Perm._Method_ID > TestMethod._Method_ID
+Ref: Proctor._Sample_ID > _Samples._Sample_ID
+Ref: Proctor._Method_ID > TestMethod._Method_ID
+Ref: CBR._Sample_ID > _Samples._Sample_ID
+Ref: CBR._Method_ID > TestMethod._Method_ID
+Ref: DrillMethod._holeID > _HoleInfo._holeID
+Ref: _Client._Client_ID > _Project._Client_ID
+Ref: Final_Strata._Geo_ID > Geology_Library._Geo_ID
+Ref: Field_Strata._Geo_ID > Geology_Library._Geo_ID
+Ref: Final_Strata._holeID > _HoleInfo._holeID
+Ref: Field_Strata._holeID > _HoleInfo._holeID
+Ref: 200wash._Sample_ID > _Samples._Sample_ID
+Ref: 200wash._Method_ID > TestMethod._Method_ID
+Ref: Hydrometer._Sample_ID > _Samples._Sample_ID
+Ref: Hydrometer._Method_ID > TestMethod._Method_ID
+Ref: RockCoring._CoringMethod_ID > CoringMethod._CoringMethod_ID
+Ref: _caveIn._holeID > _HoleInfo._holeID
+Ref: Pocket_Pen._Sample_ID> _Samples._Sample_ID
+Ref: Pocket_Pen._Method_ID> TestMethod._Method_ID
+Ref: torvane._Sample_ID> _Samples._Sample_ID
+Ref: torvane._Method_ID> TestMethod._Method_ID
+Ref: dilatometer._Sample_ID> _Samples._Sample_ID
+Ref: dilatometer._Method_ID> TestMethod._Method_ID
+Ref: pressuremeter._Sample_ID> _Samples._Sample_ID
+Ref: pressuremeter._Method_ID> TestMethod._Method_ID
+Ref: fieldSoilDesc._Geo_ID > Geology_Library._Geo_ID
+Ref: RockCoring._Geo_ID > Geology_Library._Geo_ID
+Ref: Cone_Info._rigID > _Rig._rigID
