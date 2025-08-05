@@ -2,7 +2,7 @@
 **Dataflow for DIGGS, SQL, and Excel**
 
 This is an ongoing project with the Geo Institute to build an open source database architecture that can easily integrate into geotechnical engineering workflows. This structure uses SQLite to archive data in a central location with an Excel interface for easy data input and retrieval. The database can import and export DIGGS 2.6 compliant XML files.
-
+ 
 **Database Schema:** https://dbdiagram.io/d/DIGGS-SQL-Structure-668dcbd19939893dae7ebb48
 
 For the latest downloadable release of the Executable Program: https://github.com/geotechnick/DIGGS-Data-Processor-exe/releases/tag/v1.0.0
