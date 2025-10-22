@@ -1,0 +1,839 @@
+================================================================================
+DIGGS DATA PROCESSING MANAGER - USAGE GUIDE
+================================================================================
+
+Version: 1.0.0
+Last Updated: October 2025
+Application Type: Geotechnical Data Processing Tool
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1. Getting Started
+2. First Time Setup
+3. Basic Operations
+4. Step-by-Step Workflows
+5. Understanding the Interface
+6. Common Tasks
+7. Frequently Asked Questions
+8. Troubleshooting
+9. Tips and Best Practices
+10. Getting Help
+
+================================================================================
+1. GETTING STARTED
+================================================================================
+
+What is DIGGS Data Processing Manager?
+---------------------------------------
+This application helps geotechnical engineers manage their field and laboratory
+data. It converts between Excel spreadsheets, SQLite databases, and DIGGS XML
+files - making it easy to collect, store, and share geotechnical data.
+
+What can this application do?
+-----------------------------
+- Generate Excel templates for data collection
+- Convert Excel files to SQLite databases
+- Export data to DIGGS 2.6 compliant XML format
+- Import DIGGS XML files from other sources
+- Visualize your geotechnical data with charts and graphs
+
+Who should use this application?
+--------------------------------
+- Geotechnical engineers collecting field data
+- Laboratory technicians entering test results
+- Project managers organizing geotechnical information
+- Anyone needing to share data in DIGGS format
+
+================================================================================
+2. FIRST TIME SETUP
+================================================================================
+
+Installation Options
+--------------------
+
+OPTION A: Using the Executable (Recommended for most users)
+1. Download the DIGGS_Processor_Manager.exe file
+2. Double-click the file to run the application
+3. If Windows shows a security warning, click "More info" then "Run anyway"
+4. The application will open - no installation required
+
+OPTION B: Using Python (For advanced users)
+1. Ensure Python 3.8 or higher is installed
+2. Navigate to the executable folder
+3. Run: python diggs_processor_gui_final.py
+
+OPTION C: Installing with Desktop Shortcuts (Windows)
+1. Navigate to the executable folder
+2. Double-click install.bat
+3. Desktop and Start Menu shortcuts will be created
+4. Click the shortcut to launch the application
+
+First Launch
+------------
+When you first open the application, you will see five tabs:
+- Excel Templates
+- Excel to SQLite
+- SQLite to DIGGS
+- DIGGS to SQLite
+- About
+
+Take a moment to click through each tab to familiarize yourself with the layout.
+
+================================================================================
+3. BASIC OPERATIONS
+================================================================================
+
+The Five Main Functions
+-----------------------
+
+1. GENERATE EXCEL TEMPLATES
+   Purpose: Create a blank Excel file with the correct structure for entering
+            your geotechnical data
+   When to use: Starting a new project or need a fresh template
+
+2. CONVERT EXCEL TO SQLITE
+   Purpose: Transform your Excel data into a database format
+   When to use: After completing data entry in Excel
+
+3. EXPORT SQLITE TO DIGGS XML
+   Purpose: Create a DIGGS-compliant XML file for sharing or archival
+   When to use: Need to send data to clients, regulatory agencies, or archive
+
+4. IMPORT DIGGS XML TO SQLITE
+   Purpose: Convert received DIGGS XML files into a usable database
+   When to use: You receive a DIGGS file from another organization
+
+5. VISUALIZE DATA
+   Purpose: View charts, graphs, and tables of your geotechnical data
+   When to use: Quality control, data review, or presentation preparation
+
+================================================================================
+4. STEP-BY-STEP WORKFLOWS
+================================================================================
+
+WORKFLOW 1: Starting a New Geotechnical Project
+------------------------------------------------
+
+Step 1: Generate a Blank Template
+1. Click the "Excel Templates" tab
+2. Select "Blank Template" from the dropdown menu
+3. Click "Browse" to choose where to save the file
+4. Click "Generate Template"
+5. Wait for the success message
+6. Open the created Excel file
+
+Step 2: Enter Your Data in Excel
+1. Open the generated Excel template
+2. Fill in the "Project" sheet with project information
+3. Fill in the "HoleInfo" sheet with borehole locations and depths
+4. Fill in the "Samples" sheet with sample data
+5. Fill in test result sheets (SPT, Atterberg Limits, etc.)
+6. Save the Excel file when complete
+
+Step 3: Convert to Database
+1. Return to DIGGS Data Processing Manager
+2. Click the "Excel to SQLite" tab
+3. Click "Browse" next to Input File
+4. Select your completed Excel file
+5. The output file name will be generated automatically
+6. Click "Convert to Database"
+7. Wait for the success message
+
+Step 4: Export to DIGGS XML
+1. Click the "SQLite to DIGGS" tab
+2. Click "Browse" next to Input Database
+3. Select the database file created in Step 3
+4. The output file name will be generated automatically
+5. Click "Convert to DIGGS XML"
+6. Wait for the success message
+7. Your DIGGS XML file is ready to share
+
+
+WORKFLOW 2: Processing Received DIGGS Data
+-------------------------------------------
+
+Step 1: Import DIGGS XML
+1. Click the "DIGGS to SQLite" tab
+2. Click "Browse" next to Input XML File
+3. Select the DIGGS XML file you received
+4. The output database name will be generated automatically
+5. Click "Import to Database"
+6. Review the import summary showing how many records were imported
+
+Step 2: View the Imported Data
+1. Note the location of the created database file
+2. You can now export it to DIGGS XML again if needed
+3. Or generate an Excel template and manually export data if needed
+
+
+WORKFLOW 3: Quality Control Check
+----------------------------------
+
+Step 1: Convert Your Excel Data
+1. Follow Workflow 1, Steps 1-3 to get your data into database format
+
+Step 2: Export to DIGGS
+1. Follow Workflow 1, Step 4 to create DIGGS XML
+
+Step 3: Re-import the DIGGS File
+1. Follow Workflow 2, Step 1 to import the DIGGS file you just created
+2. This validates that your data is DIGGS-compliant
+3. Review the import summary for any data loss or issues
+
+Step 4: Compare Records
+1. Check that the number of imported records matches your original data
+2. If counts differ, review your Excel data for errors
+
+================================================================================
+5. UNDERSTANDING THE INTERFACE
+================================================================================
+
+Excel Templates Tab
+-------------------
+Template Type Dropdown:
+  - Blank Template: Empty sheets ready for data entry
+  - Sample Template: Example data to show proper format
+  - Documentation: Explains what each column means
+
+Output File Path:
+  - Click "Browse" to choose where to save the template
+  - Default location is the executable folder
+  - File will be named "Geotechnical_Template_[Type].xlsx"
+
+Generate Template Button:
+  - Click to create the Excel file
+  - Progress bar shows when generation is complete
+  - Success message appears when finished
+
+
+Excel to SQLite Tab
+--------------------
+Input Excel File:
+  - Click "Browse" to select your completed Excel template
+  - Accepts .xlsx and .xls files
+  - File must follow the template structure
+
+Output Database File:
+  - Automatically generated based on input file name
+  - Click "Browse" to change location or name
+  - Will have .db extension
+
+Convert to Database Button:
+  - Starts the conversion process
+  - Progress bar shows activity
+  - Success message confirms completion
+
+
+SQLite to DIGGS Tab
+--------------------
+Input Database File:
+  - Click "Browse" to select your .db file
+  - Must be a valid SQLite database
+  - Should contain geotechnical data
+
+Output XML File:
+  - Automatically named with "_diggs_2.6_compliant.xml" suffix
+  - Click "Browse" to change location or name
+
+Convert to DIGGS XML Button:
+  - Creates DIGGS 2.6 compliant XML file
+  - Includes data validation
+  - Removes invalid entries (like negative blow counts)
+
+
+DIGGS to SQLite Tab
+--------------------
+Input XML File:
+  - Click "Browse" to select the DIGGS XML file
+  - Must be valid XML format
+  - Should be DIGGS 2.6 compliant
+
+Output Database File:
+  - Automatically named with "_imported.db" suffix
+  - Click "Browse" to change location or name
+
+Import to Database Button:
+  - Parses the XML file
+  - Creates SQLite database
+  - Shows import summary with record counts
+
+
+About Tab
+---------
+Displays:
+  - Application version information
+  - Project description
+  - Links to documentation
+  - Architecture overview
+
+================================================================================
+6. COMMON TASKS
+================================================================================
+
+Task: I need to collect data for a new borehole project
+--------------------------------------------------------
+1. Go to Excel Templates tab
+2. Select "Sample Template" to see an example first
+3. Review the sample to understand the format
+4. Generate a "Blank Template"
+5. Fill in your project data
+6. Convert to database when complete
+
+
+Task: I need to send my data to a regulatory agency
+----------------------------------------------------
+1. Ensure your Excel data is complete and saved
+2. Convert Excel to SQLite (Excel to SQLite tab)
+3. Convert SQLite to DIGGS XML (SQLite to DIGGS tab)
+4. Attach the generated XML file to your email
+5. The XML file meets DIGGS 2.6 compliance standards
+
+
+Task: A consultant sent me a DIGGS XML file
+--------------------------------------------
+1. Save the XML file to your computer
+2. Go to DIGGS to SQLite tab
+3. Browse and select the XML file
+4. Click Import to Database
+5. Review the import summary
+6. Open the database file to view the data
+
+
+Task: I want to check my data for errors
+-----------------------------------------
+1. Convert your Excel to SQLite
+2. Convert the SQLite to DIGGS XML
+3. Import the DIGGS XML back to SQLite
+4. Compare the import summary to your original record counts
+5. Any missing records indicate data issues in your Excel file
+
+
+Task: I need to update existing data
+-------------------------------------
+1. If you have the original Excel file, update it there
+2. Convert the updated Excel to a new database
+3. Export to DIGGS XML with a new filename
+4. Keep old files as backup
+
+
+Task: I want to combine data from multiple Excel files
+-------------------------------------------------------
+Note: This requires manual work
+1. Generate a blank template
+2. Open each of your Excel files
+3. Copy data from each into the blank template
+4. Ensure no duplicate project IDs or hole IDs
+5. Convert the combined Excel file to database
+
+
+Task: I need to archive my project data
+----------------------------------------
+1. Convert your Excel to SQLite (creates organized database)
+2. Convert SQLite to DIGGS XML (creates standardized archive)
+3. Keep all three files: Excel (editable), Database (queryable), XML (standard)
+4. Store in your document management system
+
+================================================================================
+7. FREQUENTLY ASKED QUESTIONS
+================================================================================
+
+Q: What file formats does this application support?
+A: The application works with:
+   - Excel files (.xlsx, .xls)
+   - SQLite databases (.db)
+   - DIGGS XML files (.xml)
+
+
+Q: Do I need Microsoft Excel installed?
+A: No, the application can read and write Excel files without Excel installed.
+   However, you will need Excel or compatible software to view and edit the
+   Excel templates.
+
+
+Q: Can I use this application offline?
+A: Yes, this is a standalone application that works completely offline.
+   No internet connection is required.
+
+
+Q: What is DIGGS?
+A: DIGGS (Data Interchange for Geotechnical and Geoenvironmental Specialists)
+   is an international standard for exchanging geotechnical data. Version 2.6
+   is the format this application uses.
+
+
+Q: Will my Excel file work if I add extra columns?
+A: The application reads specific named columns. Extra columns will be ignored,
+   but required columns must be present and correctly named.
+
+
+Q: Can I edit the database file directly?
+A: Yes, the .db files are standard SQLite databases. You can open them with
+   any SQLite viewer or editor. However, editing in Excel is usually easier.
+
+
+Q: What happens to blank cells in my Excel file?
+A: Blank cells are stored as NULL values in the database. This is normal and
+   acceptable. Not every test requires every field to be filled.
+
+
+Q: How do I know if my DIGGS XML file is valid?
+A: The application performs validation during export. If you can successfully
+   import a DIGGS file using the "DIGGS to SQLite" tab, it is valid.
+
+
+Q: Can multiple people work on the same project?
+A: Excel files can only be edited by one person at a time. For team projects,
+   use version control or have each person work on different boreholes, then
+   combine the data later.
+
+
+Q: What is the difference between blank and sample templates?
+A: Blank templates have empty rows ready for your data. Sample templates
+   include example data showing the correct format and expected values.
+
+
+Q: Where are my output files saved?
+A: By default, files are saved in the same folder as the application. You can
+   click "Browse" to choose a different location.
+
+
+Q: Does this application work on Mac or Linux?
+A: The .exe file is Windows only. Mac and Linux users should use the Python
+   version: python diggs_processor_gui_final.py
+
+
+Q: Can I customize the Excel template structure?
+A: The template structure is designed to match DIGGS standards and database
+   requirements. Adding or removing sheets will break the conversion process.
+
+
+Q: How do I include laboratory test results?
+A: Fill in the appropriate test sheets in the Excel template (AtterbergLimits,
+   Gradation, SPT, etc.). Each test type has its own sheet.
+
+
+Q: What coordinate system should I use for locations?
+A: Use latitude and longitude in decimal degrees (WGS84 / EPSG:4326). This is
+   the standard for DIGGS files. Example: 40.7128, -74.0060 (New York City)
+
+
+Q: Can I import data from other software?
+A: If the other software can export to DIGGS XML format, yes. Otherwise, you
+   will need to manually enter data into the Excel template.
+
+
+Q: How large can my Excel files be?
+A: The application can handle thousands of rows. If you have more than 10,000
+   samples, consider splitting into multiple projects for better performance.
+
+
+Q: What if the application crashes or freezes?
+A: Close and restart the application. Your input files are not modified during
+   processing, so your original data is safe. Check the Troubleshooting section
+   below for common issues.
+
+================================================================================
+8. TROUBLESHOOTING
+================================================================================
+
+Problem: Application won't start or shows an error on launch
+-------------------------------------------------------------
+Solution:
+1. Make sure you extracted all files from the ZIP archive (if downloaded)
+2. Try running as Administrator (right-click, Run as Administrator)
+3. Check that antivirus software isn't blocking the executable
+4. Windows Defender may show a warning - click "More info" then "Run anyway"
+
+
+Problem: "File not found" error when selecting files
+-----------------------------------------------------
+Solution:
+1. Ensure the file path doesn't contain special characters
+2. Avoid extremely long file paths (over 200 characters)
+3. Make sure the file isn't open in another application
+4. Check that you have read permissions for the file
+
+
+Problem: Excel conversion fails or shows errors
+------------------------------------------------
+Solution:
+1. Verify your Excel file was generated by this application's template function
+2. Check that required sheets (Project, HoleInfo) are present
+3. Ensure column names weren't changed or deleted
+4. Look for any completely blank rows in the middle of your data
+5. Try generating a sample template and comparing the structure
+
+
+Problem: DIGGS XML export produces empty or small file
+-------------------------------------------------------
+Solution:
+1. Verify your database actually contains data (check file size > 10 KB)
+2. Ensure Project and HoleInfo tables have records
+3. Check that foreign key relationships are correct (sample references hole)
+4. Try importing your database to verify it has the expected structure
+
+
+Problem: DIGGS import shows zero records imported
+--------------------------------------------------
+Solution:
+1. Verify the XML file is actually a DIGGS file (open in text editor)
+2. Check the XML file isn't corrupted (should be readable text)
+3. Ensure the XML follows DIGGS 2.6 structure (not an older version)
+4. Try opening the XML in a web browser to check for syntax errors
+
+
+Problem: Progress bar freezes or application becomes unresponsive
+------------------------------------------------------------------
+Solution:
+1. Wait at least 2-3 minutes - large files take time to process
+2. Check Windows Task Manager to see if the application is still working
+3. If truly frozen, close and restart the application
+4. Try processing a smaller subset of data first
+5. Check available disk space (need at least 100 MB free)
+
+
+Problem: Generated files are in unexpected location
+----------------------------------------------------
+Solution:
+1. Check the output path shown in the interface before clicking process
+2. Use the Browse button to explicitly set your desired output location
+3. Check your Desktop, Documents, and Downloads folders
+4. Search your computer for .db or .xml files modified today
+
+
+Problem: Data appears to be missing after conversion
+-----------------------------------------------------
+Solution:
+1. Check the Excel sheets - all data sheets must reference valid hole IDs
+2. Verify sample IDs match between Samples sheet and test result sheets
+3. Look for Excel formula cells instead of actual values
+4. Check for data in hidden columns or rows
+5. Review for special characters that may cause parsing issues
+
+
+Problem: "Permission denied" errors
+------------------------------------
+Solution:
+1. Close the input file if it's open in Excel or another program
+2. Check that the output location isn't write-protected
+3. Run the application as Administrator
+4. Choose a different output folder (like Desktop or Documents)
+
+
+Problem: Visualization features not working
+--------------------------------------------
+Solution:
+1. This requires matplotlib library which may not be included in .exe
+2. Try using the Python version instead: python diggs_processor_gui_final.py
+3. Install matplotlib: pip install matplotlib
+4. Alternatively, open the .db file in a SQLite viewer like DB Browser
+
+
+Problem: XML file won't open in other applications
+---------------------------------------------------
+Solution:
+1. The XML is designed for DIGGS-compliant software, not general XML editors
+2. You can view it in a text editor to see the raw data
+3. Use specialized DIGGS viewers for proper display
+4. Web browsers can display the XML structure
+
+
+Problem: Foreign language characters appear as boxes or question marks
+----------------------------------------------------------------------
+Solution:
+1. Ensure your Excel file is saved with UTF-8 encoding
+2. Avoid special characters in project names and descriptions when possible
+3. The database and XML support Unicode, but display depends on viewer
+4. Standard ASCII characters (A-Z, 0-9) are safest for compatibility
+
+================================================================================
+9. TIPS AND BEST PRACTICES
+================================================================================
+
+Data Entry Tips
+---------------
+1. Fill in required fields first: Project name, hole ID, sample ID
+2. Use consistent naming: If first hole is "BH-01", use "BH-02", "BH-03", etc.
+3. Double-check coordinates: Use decimal degrees, not degrees-minutes-seconds
+4. Include units in numeric fields as required by the template
+5. Date format should be YYYY-MM-DD (e.g., 2025-10-22)
+
+
+File Management Tips
+--------------------
+1. Keep original Excel files - they're easiest to edit
+2. Use descriptive filenames: "ProjectName_SiteName_Date.xlsx"
+3. Create a folder for each project with all three file types
+4. Back up your data regularly
+5. Include date stamps in filenames for version control
+
+
+Quality Control Tips
+--------------------
+1. Generate sample template first to understand proper format
+2. Fill in a few test rows, convert, and verify before doing all data
+3. Use the round-trip test: Excel → DB → XML → DB to verify data integrity
+4. Check record counts at each step
+5. Review DIGGS XML file size - should be larger than the database
+
+
+Performance Tips
+----------------
+1. Close other applications when processing large files
+2. Process files under 5000 rows for best performance
+3. Split very large projects into multiple files by area or date
+4. Keep file paths short (under 100 characters)
+5. Save files to your local hard drive, not network drives
+
+
+Collaboration Tips
+------------------
+1. Share the blank template with field crew before data collection
+2. Establish naming conventions for your team before starting
+3. Use the DIGGS XML format for sharing final data externally
+4. Keep a master Excel file and assign sections to different team members
+5. Use version numbers in filenames when multiple people are working
+
+
+Archival Tips
+-------------
+1. Store all three formats: Excel (editable), DB (queryable), XML (standard)
+2. Include a README.txt with each archive explaining the project
+3. Save templates used so future users know the expected structure
+4. Document any custom procedures or non-standard data
+5. Test that archived files can still be opened after 1 year
+
+
+Troubleshooting Prevention
+---------------------------
+1. Don't modify Excel template structure (sheets, columns)
+2. Test with small datasets before processing large amounts of data
+3. Keep a backup before attempting data conversions
+4. Check file sizes - a conversion that produces a tiny file likely failed
+5. Read all success/error messages completely before proceeding
+
+================================================================================
+10. GETTING HELP
+================================================================================
+
+Built-in Help
+-------------
+1. Click the "About" tab for version and project information
+2. Check the "Documentation" template for field explanations
+3. Review the sample template to see proper data format
+
+
+Additional Resources
+--------------------
+- Project Documentation: See README.md in installation folder
+- Database Schema: https://dbdiagram.io/d/DIGGS-SQL-Structure-668dcbd19939893dae7ebb48
+- DIGGS Standard: http://www.diggsml.org
+- Source Code: https://github.com/geotechnick/DIGGS_SQL
+
+
+Reporting Issues
+----------------
+If you encounter a bug or problem:
+
+1. Note the exact error message
+2. Document the steps that caused the problem
+3. Check the error_logs folder if it exists
+4. Try to reproduce the issue with sample data
+5. Report issues at: https://github.com/geotechnick/DIGGS_SQL/issues
+
+
+Getting Support
+---------------
+For questions or support:
+
+1. Check this usage guide first
+2. Review the FAQ section above
+3. Consult the README.md file
+4. Check existing GitHub issues for similar problems
+5. Post a new issue with details about your problem
+
+
+Common Support Questions
+------------------------
+When asking for help, include:
+- What were you trying to do?
+- What steps did you take?
+- What was the expected result?
+- What actually happened?
+- What error message appeared (exact text)?
+- What version of Windows are you using?
+- File sizes of input files
+- Whether the issue is reproducible
+
+
+Learning Resources
+------------------
+1. Start with sample templates to learn the data structure
+2. Try all workflows with sample data before using real data
+3. Read through this entire guide at least once
+4. Practice with test data from a small project first
+5. Share knowledge with team members who have used the application
+
+
+================================================================================
+APPENDIX A: EXCEL TEMPLATE SHEETS REFERENCE
+================================================================================
+
+Sheet Name: Project
+Purpose: Overall project information
+Key Fields: Project ID, Project Name, Client, Location
+Required: Yes
+
+
+Sheet Name: HoleInfo
+Purpose: Borehole location and drilling details
+Key Fields: Hole ID, Latitude, Longitude, Bottom Depth
+Required: Yes
+
+
+Sheet Name: TestMethod
+Purpose: Testing standards and procedures used
+Key Fields: Method ID, Method Name, Governing Body
+Required: No (but recommended)
+
+
+Sheet Name: Samples
+Purpose: Sample identification and depth intervals
+Key Fields: Sample ID, Hole ID, Top Depth, Bottom Depth
+Required: Yes (if you have test data)
+
+
+Sheet Name: FieldStrata
+Purpose: Field soil descriptions by layer
+Key Fields: Hole ID, Top Depth, Bottom Depth, Primary Component
+Required: No
+
+
+Sheet Name: FinalStrata
+Purpose: Final interpreted stratigraphy
+Key Fields: Hole ID, Top Depth, Bottom Depth, Primary Component
+Required: No
+
+
+Sheet Name: AtterbergLimits
+Purpose: Plasticity test results
+Key Fields: Sample ID, Liquid Limit, Plastic Limit, Plasticity Index
+Required: No
+
+
+Sheet Name: Gradation
+Purpose: Sieve analysis results
+Key Fields: Sample ID, Sieve Size, Percent Passing
+Required: No
+
+
+Sheet Name: SPT
+Purpose: Standard Penetration Test blow counts
+Key Fields: Sample ID, Blow Count Index 1, 2, 3
+Required: No
+
+
+Sheet Name: Consolidation
+Purpose: Consolidation test parameters
+Key Fields: Sample ID, Initial Void Ratio, Compression Index
+Required: No
+
+
+(Additional sheets follow similar pattern - see Documentation template)
+
+================================================================================
+APPENDIX B: FILE FORMAT SPECIFICATIONS
+================================================================================
+
+Excel Files (.xlsx, .xls)
+-------------------------
+- Created by: Excel Template Generator
+- Used for: Data entry and editing
+- Can be opened with: Microsoft Excel, LibreOffice, Google Sheets
+- Size: Typically 50-500 KB for small projects
+- Structure: Multiple sheets with specific column names
+
+
+SQLite Database Files (.db)
+----------------------------
+- Created by: Excel to SQLite Converter
+- Used for: Data storage and querying
+- Can be opened with: DB Browser for SQLite, SQLiteStudio, any SQLite client
+- Size: Typically 100-1000 KB for small projects
+- Structure: Normalized relational database with foreign keys
+
+
+DIGGS XML Files (.xml)
+-----------------------
+- Created by: SQLite to DIGGS Converter
+- Used for: Data exchange and archival
+- Can be opened with: Text editor, web browser, DIGGS-compliant software
+- Size: Typically larger than database (500-5000 KB)
+- Structure: Hierarchical XML following DIGGS 2.6 schema
+
+
+================================================================================
+APPENDIX C: QUICK REFERENCE CARD
+================================================================================
+
+STEP 1: GENERATE TEMPLATE
+Tab: Excel Templates
+Action: Select type → Browse location → Generate Template
+
+
+STEP 2: FILL IN DATA
+Application: Microsoft Excel or compatible
+Action: Open template → Enter data → Save file
+
+
+STEP 3: CONVERT TO DATABASE
+Tab: Excel to SQLite
+Action: Browse input file → Browse output location → Convert
+
+
+STEP 4: EXPORT TO DIGGS
+Tab: SQLite to DIGGS
+Action: Browse database → Browse output location → Convert
+
+
+IMPORT DIGGS FILE
+Tab: DIGGS to SQLite
+Action: Browse XML file → Browse output location → Import
+
+
+TYPICAL FILE SIZES
+Excel Template: 30-100 KB
+Completed Excel: 100-500 KB
+SQLite Database: 100-1000 KB
+DIGGS XML: 500-5000 KB
+
+
+COMMON FILE EXTENSIONS
+.xlsx = Excel Workbook
+.xls = Legacy Excel Workbook
+.db = SQLite Database
+.xml = DIGGS XML File
+
+
+REQUIRED SHEETS FOR CONVERSION
+- Project (must have data)
+- HoleInfo (must have data)
+- Samples (if you have test results)
+
+
+COORDINATE FORMAT
+Latitude: Decimal degrees (e.g., 40.7128)
+Longitude: Decimal degrees (e.g., -74.0060)
+System: WGS84 (EPSG:4326)
+
+================================================================================
+END OF USAGE GUIDE
+================================================================================
+
+For the latest version of this guide and additional resources, visit:
+https://github.com/geotechnick/DIGGS_SQL
+
+Document Version: 1.0.0
+Last Updated: October 2025
