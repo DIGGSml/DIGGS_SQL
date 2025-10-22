@@ -1,8 +1,8 @@
 from typing import Dict, Any, Optional
-from processor_interfaces import ProcessorFactory, DataProcessor
-from excel_processor import ExcelToSQLiteConverter, ExcelTemplateGenerator
-from diggs_processor import SQLiteToDiggsConverter, DiggsToSQLiteImporter
-from visualization_processor import DatabaseVisualizationProcessor
+from .processor_interfaces import ProcessorFactory, DataProcessor
+from .excel_processor import ExcelToSQLiteConverter, ExcelTemplateGenerator
+from .diggs_processor import SQLiteToDiggsConverter, DiggsToSQLiteImporter
+from .visualization_processor import DatabaseVisualizationProcessor
 
 class ExcelProcessorFactory(ProcessorFactory):
     """Factory for Excel-related processors"""

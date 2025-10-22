@@ -69,7 +69,6 @@ class ExcelToSQLiteConverter:
             '''CREATE TABLE IF NOT EXISTS "TestMethod" (
               "_Method_ID" TEXT PRIMARY KEY,
               "methodName" TEXT,
-              "description" TEXT,
               "governingBody" TEXT,
               "units" TEXT,
               "modification" TEXT

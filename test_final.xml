@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diggs xmlns="http://diggsml.org/schemas/2.6"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:diggs_geo="http://diggsml.org/schemas/2.6/geotechnical"
+       xmlns:witsml="http://www.witsml.org/schemas/131"
+       xmlns:glr="http://www.opengis.net/gml/3.3/lr"
+       xmlns:xlink="http://www.w3.org/1999/xlink"
+       xmlns:g3.3="http://www.opengis.net/gml/3.3/ce"
+       xmlns:gml="http://www.opengis.net/gml/3.2"
+       xmlns:diggs="http://diggsml.org/schemas/2.6"
+       xmlns:glrov="http://www.opengis.net/gml/3.3/lrov"
+       xsi:schemaLocation="http://diggsml.org/schemas/2.6 http://diggsml.org/schemas/2.5.a/Kernel.xsd"
+       gml:id="diggs_document_0a9f2dc2">
+  <documentInformation>
+    <DocumentInformation>
+      <creationDateTime>2025-10-22T12:13:36.572547</creationDateTime>
+      <documentCreator>SQLite to DIGGS Converter v2.0</documentCreator>
+      <documentTitle>Geotechnical Investigation Data - DIGGS 2.6 Compliant</documentTitle>
+      <documentDescription>DIGGS 2.6 compliant document generated from SQLite database with data validation</documentDescription>
+      <documentVersion>2.0</documentVersion>
+    </DocumentInformation>
+  </documentInformation>
+  <Project gml:id="project_PROJ_ecdc65e4">
+    <name>Sample Project</name>
+    <internalIdentifier>2024-001</internalIdentifier>
+    <description>Geotechnical investigation project in VA, US, Henrico County</description>
+    <role>
+      <roleName>Client</roleName>
+      <organization>Sample Client</organization>
+      <contact>client@example.com</contact>
+    </role>
+  </Project>
+  <InvestigationTarget gml:id="target_PROJ_ecdc65e4">
+    <name>Site Investigation - Sample Project</name>
+    <description>Geotechnical site investigation for foundation design and construction planning</description>
+  </InvestigationTarget>
+  <samplingActivity gml:id="sampling_activity_PROJ_ecdc65e4">
+    <name>Geotechnical Sampling Activities</name>
+    <description>Field sampling and drilling activities for geotechnical investigation</description>
+    <investigationTarget gml:href="#target_PROJ_ecdc65e4" />
+  </samplingActivity>
+  <SamplingFeature gml:id="hole_HOLE_c34a6bc7">
+    <name>B-1</name>
+    <description>Borehole B-1</description>
+    <investigationTarget gml:href="#target_PROJ_ecdc65e4" />
+    <samplingActivity gml:href="#sampling_activity_PROJ_ecdc65e4" />
+    <referencePoint>
+      <gml:Point gml:id="point_HOLE_c34a6bc7" srsName="EPSG:4326">
+        <gml:pos>37.5407 -77.436 150.0</gml:pos>
+      </gml:Point>
+    </referencePoint>
+    <boreholeDetails>
+      <totalDepth uom="m">50.0</totalDepth>
+      <inclination uom="deg">90.0</inclination>
+      <terminationReason>refusal</terminationReason>
+      <drillingInformation>
+        <rigDescription>CME 55</rigDescription>
+        <hammerType>automatic</hammerType>
+        <hammerEfficiency uom="%">89.0</hammerEfficiency>
+      </drillingInformation>
+    </boreholeDetails>
+  </SamplingFeature>
+  <Sample gml:id="sample_SAMPLE_afa050bc">
+    <name>S-1</name>
+    <samplingFeature gml:href="#hole_HOLE_c34a6bc7" />
+    <samplingActivity gml:href="#sampling_activity_PROJ_ecdc65e4" />
+    <depthInterval>
+      <topDepth uom="m">0.0</topDepth>
+      <bottomDepth uom="m">2.0</bottomDepth>
+    </depthInterval>
+    <samplingMethod>split spoon</samplingMethod>
+  </Sample>
+  <observation gml:id="obs_atterberg_SAMPLE_afa050bc_a8257c0f">
+    <sample gml:href="#sample_SAMPLE_afa050bc" />
+    <samplingFeature gml:href="#hole_HOLE_c34a6bc7" />
+    <name>Atterberg Limits Test Observation</name>
+    <description>Laboratory determination of liquid limit, plastic limit, and plasticity index</description>
+    <diggs_geo:AtterbergLimitsTest gml:id="atterberg_SAMPLE_afa050bc_a8257c0f">
+      <testMethod>
+        <name>ASTM D4318</name>
+        <standard>ASTM</standard>
+      </testMethod>
+      <testResults>
+        <plasticLimit uom="%">15.0</plasticLimit>
+        <liquidLimit uom="%">28.0</liquidLimit>
+        <plasticityIndex uom="%">13.0</plasticityIndex>
+      </testResults>
+    </diggs_geo:AtterbergLimitsTest>
+  </observation>
+  <observation gml:id="obs_spt_SAMPLE_afa050bc_2c69ab4f">
+    <sample gml:href="#sample_SAMPLE_afa050bc" />
+    <samplingFeature gml:href="#hole_HOLE_c34a6bc7" />
+    <name>Standard Penetration Test Observation</name>
+    <description>In-situ standard penetration test for soil density and sampling</description>
+    <diggs_geo:DrivenPenetrationTest gml:id="spt_SAMPLE_afa050bc_2c69ab4f">
+      <testMethod>
+        <name>Standard Penetration Test</name>
+        <standard>ASTM</standard>
+      </testMethod>
+      <testDetails>
+      </testDetails>
+      <penetrationIncrements>
+        <increment>
+          <incrementNumber>1</incrementNumber>
+          <blowCount>4</blowCount>
+        </increment>
+        <increment>
+          <incrementNumber>2</incrementNumber>
+          <blowCount>6</blowCount>
+        </increment>
+        <increment>
+          <incrementNumber>3</incrementNumber>
+          <blowCount>8</blowCount>
+        </increment>
+        <increment>
+          <incrementNumber>4</incrementNumber>
+          <blowCount>10</blowCount>
+        </increment>
+      </penetrationIncrements>
+      <sampleRecovery uom="%">95.0</sampleRecovery>
+    </diggs_geo:DrivenPenetrationTest>
+  </observation>
+</Diggs>

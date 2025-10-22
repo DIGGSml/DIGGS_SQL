@@ -2,7 +2,7 @@ import os
 import sqlite3
 import xml.etree.ElementTree as ET
 from typing import Dict, Any, Optional
-from processor_interfaces import ConverterProcessor, ImporterProcessor
+from .processor_interfaces import ConverterProcessor, ImporterProcessor
 
 class SQLiteToDiggsConverter(ConverterProcessor):
     """Convert SQLite database to DIGGS 2.6 XML format"""
@@ -44,8 +44,8 @@ class SQLiteToDiggsConverter(ConverterProcessor):
         
         try:
             # Import the DIGGS converter
-            import sqlite_to_diggs_converter
-            
+            from . import sqlite_to_diggs_converter
+
             # Create and run the converter
             converter = sqlite_to_diggs_converter.DiggsCompliantXMLGenerator(input_path)
             converter.generate_diggs_xml(output_path)
@@ -100,8 +100,8 @@ class DiggsToSQLiteImporter(ImporterProcessor):
         
         try:
             # Import the DIGGS importer
-            import diggs_to_sqlite_importer
-            
+            from . import diggs_to_sqlite_importer
+
             # Create and run the importer
             importer = diggs_to_sqlite_importer.DiggsToSQLiteImporter(target_path)
             importer.import_diggs_xml(input_path)

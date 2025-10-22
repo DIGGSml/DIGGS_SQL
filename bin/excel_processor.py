@@ -42,8 +42,8 @@ class ExcelToSQLiteConverter(ConverterProcessor):
         
         try:
             # Import and use the existing converter
-            import excel_to_sqlite_converter
-            
+            from . import excel_to_sqlite_converter
+
             # Run the conversion
             converter = excel_to_sqlite_converter.ExcelToSQLiteConverter()
             success = converter.convert_excel_to_sqlite(input_path, output_path)
@@ -81,8 +81,8 @@ class ExcelTemplateGenerator(GeneratorProcessor):
         """Generate Excel template file"""
         try:
             # Import the template generator
-            import excel_template_generator
-            
+            from . import excel_template_generator
+
             generator = excel_template_generator.ExcelTemplateGenerator()
             
             if template_type.lower() == "blank":

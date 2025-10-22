@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import numpy as np
 from typing import Dict, Any, Optional, List, Tuple
-from processor_interfaces import DataProcessor
+from .processor_interfaces import DataProcessor
 import os
 
 # Skip seaborn import to avoid pyzmq dependency in executable
