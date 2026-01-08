@@ -30,6 +30,13 @@ class DiggsToSQLiteImporter:
             'samples': set(),
             'tests': set()
         }
+
+        # Map GML IDs to database IDs for lookups
+        self.gml_id_mapping = {
+            'projects': {},  # gml_id -> db_id
+            'holes': {},     # gml_id -> db_id
+            'samples': {},   # gml_id -> db_id
+        }
     
     def generate_id(self, prefix=""):
         """Generate a unique ID"""
@@ -64,14 +71,31 @@ class DiggsToSQLiteImporter:
     def find_element(self, parent, tag_name, use_gml=False):
         """Find element with namespace awareness"""
         ns_prefix = 'gml' if use_gml else 'diggs'
+
+        # Debug for blowCount specifically
+        debug_this = tag_name == 'blowCount' and not hasattr(self, '_blowcount_debug')
+        if debug_this:
+            self._blowcount_debug = True
+            print(f"    DEBUG find_element: Looking for {tag_name}, ns_prefix={ns_prefix}")
+            print(f"    DEBUG find_element: namespaces={self.namespaces}")
+
         # Try with namespace prefix
         elem = parent.find(f'.//{ns_prefix}:{tag_name}', self.namespaces)
+        if debug_this:
+            print(f"    DEBUG find_element: Try 1 (.//diggs:blowCount) = {elem is not None}")
+
         if elem is None:
             # Try with full namespace
             elem = parent.find(f'.//{{{self.namespaces[ns_prefix]}}}{tag_name}')
+            if debug_this:
+                print(f"    DEBUG find_element: Try 2 (full NS) = {elem is not None}")
+
         if elem is None:
             # Try without namespace
             elem = parent.find(f'.//{tag_name}')
+            if debug_this:
+                print(f"    DEBUG find_element: Try 3 (no NS) = {elem is not None}")
+
         return elem
 
     def findall_elements(self, parent, tag_name, use_gml=False):
@@ -337,14 +361,16 @@ class DiggsToSQLiteImporter:
             # Create hole record
             hole_id = self.generate_id("HOLE_")
             try:
-                self.cur.execute('''INSERT OR IGNORE INTO "_HoleInfo" 
+                self.cur.execute('''INSERT OR IGNORE INTO "_HoleInfo"
                                   ("_holeID", "_rigID", "_Project_ID", "holeName", "holeType",
-                                   "topLatitude", "topLongitude", "groundSurface", "bottomDepth", "termination") 
+                                   "topLatitude", "topLongitude", "groundSurface", "bottomDepth", "termination")
                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                                (hole_id, rig_id, project_id, self.safe_text(name_elem), 'boring',
                                 latitude, longitude, elevation, total_depth, termination))
-                
+
                 self.imported_ids['holes'].add(gml_id)
+                # Store the mapping from GML ID to database ID
+                self.gml_id_mapping['holes'][gml_id] = hole_id
                 print(f"  Imported borehole: {self.safe_text(name_elem)}")
                 
             except sqlite3.Error as e:
@@ -451,11 +477,51 @@ class DiggsToSQLiteImporter:
                         pass
     
     def import_observations(self, root):
-        """Import observation elements containing test data"""
+        """Import measurement/Test elements containing test data"""
+        # Search for measurement elements containing Test elements
+        measurements = self.findall_elements(root, 'measurement')
+
+        print(f"Importing {len(measurements)} measurements with test data...")
+
+        if len(measurements) == 0:
+            print("  Warning: No measurements found, trying alternate search methods...")
+            # Debug: try different approaches
+            measurements = root.findall('.//diggs:measurement', self.namespaces)
+            print(f"  Found {len(measurements)} with direct namespace search")
+
+        tests_imported = 0
+        tests_found = 0
+        tests_with_procedure = 0
+
+        for i, measurement in enumerate(measurements):
+            # Get the Test element
+            test = self.find_element(measurement, 'Test')
+            if test:
+                tests_found += 1
+                # Check if it has procedure
+                procedure = self.find_element(test, 'procedure')
+                if procedure:
+                    tests_with_procedure += 1
+
+                # Import test based on procedure type
+                if self.import_test_from_measurement(test):
+                    tests_imported += 1
+
+            # Show progress every 500 tests
+            if i > 0 and i % 500 == 0:
+                print(f"  Processed {i}/{len(measurements)} measurements...")
+
+        print(f"  Tests found: {tests_found}, with procedure: {tests_with_procedure}")
+        if hasattr(self, '_spt_count'):
+            print(f"  SPT tests found: {self._spt_count}, imported: {self._spt_success}")
+        print(f"  Successfully imported {tests_imported} test records")
+        return
+
+        # OLD CODE BELOW - keep for reference of observation-based import
         observations = root.findall('.//observation', self.namespaces)
         if not observations:
             observations = root.findall('.//observation')
-        
+
         print(f"Importing {len(observations)} observations with test data...")
         
         for obs in observations:
@@ -463,18 +529,176 @@ class DiggsToSQLiteImporter:
             atterberg_tests = obs.findall('.//AtterbergLimitsTest', self.namespaces)
             if not atterberg_tests:
                 atterberg_tests = obs.findall('.//AtterbergLimitsTest')
-            
+
             for test in atterberg_tests:
                 self.import_atterberg_test(test, obs)
-            
+
             # Import SPT tests
             spt_tests = obs.findall('.//DrivenPenetrationTest', self.namespaces)
             if not spt_tests:
                 spt_tests = obs.findall('.//DrivenPenetrationTest')
-            
+
             for test in spt_tests:
                 self.import_spt_test(test, obs)
-    
+
+    def import_test_from_measurement(self, test_element):
+        """Import a single test from a measurement/Test element"""
+        try:
+            # Get borehole reference
+            sampling_ref = self.find_element(test_element, 'samplingFeatureRef')
+            hole_id = None
+
+            if sampling_ref is not None:
+                href = sampling_ref.get('{http://www.w3.org/1999/xlink}href')
+                if href:
+                    # Extract the borehole ID from href (e.g., "#Location_B-01")
+                    borehole_gml_id = href.lstrip('#')
+                    # Find corresponding hole in database
+                    self.cur.execute('SELECT "_holeID", "holeName" FROM "_HoleInfo"')
+                    # For now, match by extracting the hole name from the test
+                    test_name = self.find_element(test_element, 'name', use_gml=True)
+                    test_name_text = self.safe_text(test_name)
+
+            # Get the procedure element to determine test type
+            procedure = self.find_element(test_element, 'procedure')
+            if procedure is None:
+                return False
+
+            # Check what type of test is in the procedure
+            spt_test = self.find_element(procedure, 'DrivenPenetrationTest')
+            if spt_test:
+                result = self.import_spt_from_procedure(spt_test, test_element)
+                if not hasattr(self, '_spt_count'):
+                    self._spt_count = 0
+                    self._spt_success = 0
+                self._spt_count += 1
+                if result:
+                    self._spt_success += 1
+                return result
+
+            atterberg_test = self.find_element(procedure, 'AtterbergLimitsTest')
+            if atterberg_test:
+                return self.import_atterberg_from_procedure(atterberg_test, test_element)
+
+            # Add more test types as needed
+            return False
+
+        except Exception as e:
+            print(f"    Warning: Error importing test - {e}")
+            return False
+
+    def import_spt_from_procedure(self, spt_elem, test_elem):
+        """Import SPT test data from procedure element"""
+        debug_first = not hasattr(self, '_spt_debug_done')
+        if debug_first:
+            self._spt_debug_done = True
+
+        try:
+            # Get test location (depth)
+            outcome = self.find_element(test_elem, 'outcome')
+            test_result = self.find_element(outcome, 'TestResult') if outcome else None
+            location_elem = self.find_element(test_result, 'location') if test_result else None
+
+            top_depth = None
+            bottom_depth = None
+
+            if location_elem:
+                pos_list = self.find_element(location_elem, 'posList', use_gml=True)
+                if pos_list and pos_list.text:
+                    coords = pos_list.text.strip().split()
+                    if len(coords) >= 2:
+                        top_depth = self.safe_float(type('obj', (), {'text': coords[0]})())
+                        bottom_depth = self.safe_float(type('obj', (), {'text': coords[1]})())
+
+            # Get N-value from results
+            n_value = None
+            if test_result:
+                results = self.find_element(test_result, 'results')
+                if results:
+                    result_set = self.find_element(results, 'ResultSet')
+                    if result_set:
+                        data_values = self.find_element(result_set, 'dataValues')
+                        if data_values and data_values.text:
+                            n_value = self.safe_int(data_values)
+
+            # Get blow counts from drive sets
+            drive_sets = self.findall_elements(spt_elem, 'driveSet')
+            blow_counts = []
+
+            if debug_first:
+                print(f"    DEBUG: Found {len(drive_sets)} driveSets in SPT")
+
+            for ds_idx, ds in enumerate(drive_sets):
+                drive_set_elem = self.find_element(ds, 'DriveSet')
+                if drive_set_elem:
+                    if debug_first and ds_idx == 0:
+                        print(f"    DEBUG: DriveSet tag = {drive_set_elem.tag}")
+                        print(f"    DEBUG: DriveSet children = {[c.tag for c in list(drive_set_elem)[:5]]}")
+                        print(f"    DEBUG: Namespace dict = {self.namespaces}")
+                        # Try manual search
+                        manual1 = drive_set_elem.find('.//diggs:blowCount', self.namespaces)
+                        manual2 = drive_set_elem.find('.//{http://diggsml.org/schema-dev}blowCount')
+                        print(f"    DEBUG: Manual diggs:blowCount = {manual1 is not None}")
+                        print(f"    DEBUG: Manual full NS = {manual2 is not None}")
+
+                    blow_count_elem = self.find_element(drive_set_elem, 'blowCount')
+                    if blow_count_elem is not None:  # IMPORTANT: Elements evaluate to False in Python!
+                        bc = self.safe_int(blow_count_elem)
+                        if bc is not None:
+                            blow_counts.append(bc)
+                            if debug_first:
+                                print(f"    DEBUG: blowCount = {bc}")
+                        elif debug_first:
+                            print(f"    DEBUG: blowCount is None, text={blow_count_elem.text}")
+                    elif debug_first:
+                        print(f"    DEBUG: blow_count_elem not found")
+                elif debug_first:
+                    print(f"    DEBUG: drive_set_elem not found")
+
+            # Get borehole reference
+            sampling_ref = self.find_element(test_elem, 'samplingFeatureRef')
+            hole_id = None
+
+            if sampling_ref is not None:
+                href = sampling_ref.get('{http://www.w3.org/1999/xlink}href')
+                if href:
+                    borehole_gml_id = href.lstrip('#')
+                    # Look up the database ID using the GML ID mapping
+                    hole_id = self.gml_id_mapping['holes'].get(borehole_gml_id)
+                    if not hole_id and debug_first:
+                        print(f"    DEBUG: Borehole GML ID '{borehole_gml_id}' not found in mapping!")
+                        print(f"    DEBUG: Available mappings: {list(self.gml_id_mapping['holes'].keys())[:5]}")
+
+            # Insert SPT test
+            if debug_first:
+                print(f"    DEBUG SPT: hole_id={hole_id}, blow_counts={blow_counts}, depth={top_depth}-{bottom_depth}, N={n_value}")
+
+            if len(blow_counts) >= 3:
+                spt_id = self.generate_id("SPT_")
+                self.cur.execute('''INSERT OR IGNORE INTO "_SPT"
+                                  ("_SPT_ID", "_holeID", "topDepth", "bottomDepth",
+                                   "blows1", "blows2", "blows3", "nValue")
+                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                               (spt_id, hole_id, top_depth, bottom_depth,
+                                blow_counts[0], blow_counts[1], blow_counts[2], n_value))
+                if debug_first:
+                    print(f"    DEBUG: SPT inserted successfully")
+                return True
+            else:
+                if debug_first:
+                    print(f"    DEBUG: Not enough blow counts ({len(blow_counts)})")
+
+            return False
+
+        except sqlite3.Error as e:
+            print(f"    Warning: Could not import SPT test - {e}")
+            return False
+
+    def import_atterberg_from_procedure(self, atterberg_elem, test_elem):
+        """Import Atterberg test data from procedure element"""
+        # TODO: Implement Atterberg limits import
+        return False
+
     def import_atterberg_test(self, test_elem, obs_elem):
         """Import Atterberg Limits test data"""
         # Get sample reference
