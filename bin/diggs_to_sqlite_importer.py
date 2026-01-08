@@ -378,10 +378,9 @@ class DiggsToSQLiteImporter:
     
     def import_samples(self, root):
         """Import Sample elements"""
-        samples = root.findall('.//Sample', self.namespaces)
-        if not samples:
-            samples = root.findall('.//Sample')
-        
+        # Use helper method for namespace-aware search
+        samples = self.findall_elements(root, 'Sample')
+
         print(f"Importing {len(samples)} samples...")
         
         for sample in samples:
@@ -393,30 +392,30 @@ class DiggsToSQLiteImporter:
                 continue
             
             # Extract sample data
-            name_elem = sample.find('.//name')
-            
+            name_elem = self.find_element(sample, 'name', use_gml=True)
+
             # Extract depth interval
-            depth_elem = sample.find('.//depthInterval')
+            depth_elem = self.find_element(sample, 'depthInterval')
             top_depth = None
             bottom_depth = None
-            
+
             if depth_elem is not None:
-                top_elem = depth_elem.find('.//topDepth')
-                bottom_elem = depth_elem.find('.//bottomDepth')
+                top_elem = self.find_element(depth_elem, 'topDepth')
+                bottom_elem = self.find_element(depth_elem, 'bottomDepth')
                 top_depth = self.safe_float(top_elem)
                 bottom_depth = self.safe_float(bottom_elem)
-            
+
             # Extract sampling method
-            method_elem = sample.find('.//samplingMethod')
-            
-            # Find associated hole ID from samplingFeature reference
+            method_elem = self.find_element(sample, 'samplingMethod')
+
+            # Find associated hole ID from samplingActivityRef (samples link to activities, not directly to boreholes)
             hole_id = None
-            sf_ref = sample.find('.//samplingFeature')
-            if sf_ref is not None:
-                href = sf_ref.get('gml:href') or sf_ref.get('href')
+            activity_ref = self.find_element(sample, 'samplingActivityRef')
+            if activity_ref is not None:
+                href = activity_ref.get('{http://www.w3.org/1999/xlink}href')
                 if href and href.startswith('#'):
-                    # This is a reference to a sampling feature
-                    # For now, use the first available hole
+                    # For now, just use first available hole
+                    # TODO: Parse sampling activities to link properly
                     try:
                         self.cur.execute('SELECT "_holeID" FROM "_HoleInfo" LIMIT 1')
                         result = self.cur.fetchone()
@@ -428,14 +427,16 @@ class DiggsToSQLiteImporter:
             # Create sample record
             sample_id = self.generate_id("SAMPLE_")
             try:
-                self.cur.execute('''INSERT OR IGNORE INTO "_Samples" 
-                                  ("_Sample_ID", "_holeID", "sampleName", "pos_topDepth", 
-                                   "pos_bottomDepth", "sampleMethod") 
+                self.cur.execute('''INSERT OR IGNORE INTO "_Samples"
+                                  ("_Sample_ID", "_holeID", "sampleName", "pos_topDepth",
+                                   "pos_bottomDepth", "sampleMethod")
                                   VALUES (?, ?, ?, ?, ?, ?)''',
                                (sample_id, hole_id, self.safe_text(name_elem),
                                 top_depth, bottom_depth, self.safe_text(method_elem)))
-                
+
                 self.imported_ids['samples'].add(gml_id)
+                # Store the mapping from GML ID to database ID
+                self.gml_id_mapping['samples'][gml_id] = sample_id
                 print(f"  Imported sample: {self.safe_text(name_elem)}")
                 
             except sqlite3.Error as e:
@@ -669,24 +670,23 @@ class DiggsToSQLiteImporter:
                         print(f"    DEBUG: Borehole GML ID '{borehole_gml_id}' not found in mapping!")
                         print(f"    DEBUG: Available mappings: {list(self.gml_id_mapping['holes'].keys())[:5]}")
 
-            # Insert SPT test
-            if debug_first:
-                print(f"    DEBUG SPT: hole_id={hole_id}, blow_counts={blow_counts}, depth={top_depth}-{bottom_depth}, N={n_value}")
+            # Get total penetration from SPT element
+            total_pen_elem = self.find_element(spt_elem, 'totalPenetration')
+            total_penetration = self.safe_float(total_pen_elem)
 
-            if len(blow_counts) >= 3:
-                spt_id = self.generate_id("SPT_")
-                self.cur.execute('''INSERT OR IGNORE INTO "_SPT"
-                                  ("_SPT_ID", "_holeID", "topDepth", "bottomDepth",
-                                   "blows1", "blows2", "blows3", "nValue")
-                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                               (spt_id, hole_id, top_depth, bottom_depth,
-                                blow_counts[0], blow_counts[1], blow_counts[2], n_value))
-                if debug_first:
-                    print(f"    DEBUG: SPT inserted successfully")
-                return True
-            else:
-                if debug_first:
-                    print(f"    DEBUG: Not enough blow counts ({len(blow_counts)})")
+            # Insert SPT test - NOTE: SPT table uses _Sample_ID, not _holeID
+            # For now, we'll skip SPT import until we can properly link tests to samples
+            # Tests need to reference samples, but we need to determine which sample each test belongs to
+
+            if debug_first:
+                print(f"    DEBUG SPT: hole_id={hole_id}, blow_counts={blow_counts}, depth={top_depth}-{bottom_depth}, total_pen={total_penetration}")
+                print(f"    DEBUG: SPT import requires sample linkage - skipping for now")
+
+            # TODO: Implement proper SPT import with sample linkage
+            # The database schema requires:
+            # - _Sample_ID (need to link test to sample)
+            # - blowCount_index1, blowCount_index2, blowCount_index3 (we have these)
+            # - penetration_index1, penetration_index2, penetration_index3 (need to extract)
 
             return False
 
