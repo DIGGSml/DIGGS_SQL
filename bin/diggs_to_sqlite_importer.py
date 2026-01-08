@@ -60,6 +60,32 @@ class DiggsToSQLiteImporter:
             except (ValueError, TypeError):
                 return None
         return None
+
+    def find_element(self, parent, tag_name, use_gml=False):
+        """Find element with namespace awareness"""
+        ns_prefix = 'gml' if use_gml else 'diggs'
+        # Try with namespace prefix
+        elem = parent.find(f'.//{ns_prefix}:{tag_name}', self.namespaces)
+        if elem is None:
+            # Try with full namespace
+            elem = parent.find(f'.//{{{self.namespaces[ns_prefix]}}}{tag_name}')
+        if elem is None:
+            # Try without namespace
+            elem = parent.find(f'.//{tag_name}')
+        return elem
+
+    def findall_elements(self, parent, tag_name, use_gml=False):
+        """Find all elements with namespace awareness"""
+        ns_prefix = 'gml' if use_gml else 'diggs'
+        # Try with namespace prefix
+        elems = parent.findall(f'.//{ns_prefix}:{tag_name}', self.namespaces)
+        if not elems:
+            # Try with full namespace
+            elems = parent.findall(f'.//{{{self.namespaces[ns_prefix]}}}{tag_name}')
+        if not elems:
+            # Try without namespace
+            elems = parent.findall(f'.//{tag_name}')
+        return elems
     
     def create_database_if_not_exists(self):
         """Create database tables if they don't exist"""
@@ -115,21 +141,29 @@ class DiggsToSQLiteImporter:
     def import_diggs_xml(self, xml_path):
         """Import DIGGS XML file into SQLite database"""
         print(f"Importing DIGGS XML file: {xml_path}")
-        
+
         if not os.path.exists(xml_path):
             raise FileNotFoundError(f"XML file not found: {xml_path}")
-        
+
         # Parse XML
         try:
             tree = ET.parse(xml_path)
             root = tree.getroot()
         except ET.ParseError as e:
             raise ValueError(f"Invalid XML file: {e}")
-        
+
         # Verify this is a DIGGS file
         if not (root.tag.endswith('Diggs') or 'diggs' in root.tag.lower()):
             raise ValueError("This does not appear to be a DIGGS XML file")
-        
+
+        # Detect actual namespace from root element
+        if root.tag.startswith('{'):
+            actual_ns = root.tag.split('}')[0][1:]
+            print(f"Detected DIGGS namespace: {actual_ns}")
+            # Update namespace if different
+            if actual_ns != self.namespaces['diggs']:
+                self.namespaces['diggs'] = actual_ns
+
         print("Parsing DIGGS XML structure...")
         
         # Create database structure if needed
@@ -151,38 +185,36 @@ class DiggsToSQLiteImporter:
     
     def import_projects(self, root):
         """Import Project elements"""
-        projects = root.findall('.//Project', self.namespaces)
-        if not projects:
-            # Try without namespace
-            projects = root.findall('.//Project')
-        
+        # Use helper method for namespace-aware search
+        projects = self.findall_elements(root, 'Project')
+
         print(f"Importing {len(projects)} projects...")
-        
+
         for project in projects:
             gml_id = project.get(f'{{{self.namespaces["gml"]}}}id')
             if not gml_id:
                 gml_id = project.get('gml:id')
-            
+
             if gml_id in self.imported_ids['projects']:
                 continue
-            
-            # Extract project data
-            name_elem = project.find('.//name')
-            identifier_elem = project.find('.//internalIdentifier')
-            description_elem = project.find('.//description')
+
+            # Extract project data - use GML namespace for these standard elements
+            name_elem = self.find_element(project, 'name', use_gml=True)
+            identifier_elem = self.find_element(project, 'internalIdentifier')
+            description_elem = self.find_element(project, 'description', use_gml=True)
             
             # Extract client information from role
-            role_elem = project.find('.//role')
+            role_elem = self.find_element(project, 'role')
             client_name = None
             client_contact = None
-            
+
             if role_elem is not None:
-                org_elem = role_elem.find('.//organization')
-                contact_elem = role_elem.find('.//contact')
-                if org_elem is not None:
-                    client_name = self.safe_text(org_elem)
-                if contact_elem is not None:
-                    client_contact = self.safe_text(contact_elem)
+                # Look for BusinessAssociate name
+                ba_elem = self.find_element(role_elem, 'BusinessAssociate')
+                if ba_elem is not None:
+                    ba_name_elem = self.find_element(ba_elem, 'name', use_gml=True)
+                    if ba_name_elem is not None:
+                        client_name = self.safe_text(ba_name_elem)
             
             # Create client record
             client_id = self.generate_id("CLIENT_")
@@ -220,38 +252,33 @@ class DiggsToSQLiteImporter:
     
     def import_sampling_features(self, root):
         """Import SamplingFeature elements (boreholes)"""
-        features = root.findall('.//SamplingFeature', self.namespaces)
-        if not features:
-            features = root.findall('.//SamplingFeature')
-        
+        # Search for Borehole elements specifically
+        features = self.findall_elements(root, 'Borehole')
+
         print(f"Importing {len(features)} sampling features...")
-        
+
         for feature in features:
             gml_id = feature.get(f'{{{self.namespaces["gml"]}}}id')
             if not gml_id:
                 gml_id = feature.get('gml:id')
-            
+
             if gml_id in self.imported_ids['holes']:
                 continue
-            
+
             # Extract basic information
-            name_elem = feature.find('.//name')
-            description_elem = feature.find('.//description')
-            
+            name_elem = self.find_element(feature, 'name', use_gml=True)
+            description_elem = self.find_element(feature, 'description', use_gml=True)
+
             # Extract coordinates from GML Point
-            point_elem = feature.find('.//Point', self.namespaces)
-            if not point_elem:
-                point_elem = feature.find('.//Point')
+            point_elem = self.find_element(feature, 'Point', use_gml=True)
             
             latitude = None
             longitude = None
             elevation = None
             
             if point_elem is not None:
-                pos_elem = point_elem.find('.//pos', self.namespaces)
-                if not pos_elem:
-                    pos_elem = point_elem.find('.//pos')
-                
+                pos_elem = self.find_element(point_elem, 'pos', use_gml=True)
+
                 if pos_elem is not None and pos_elem.text:
                     coords = pos_elem.text.strip().split()
                     if len(coords) >= 2:
@@ -279,21 +306,23 @@ class DiggsToSQLiteImporter:
                 termination = self.safe_text(term_elem)
             
             # Create rig record if drilling info exists
-            rig_id = self.generate_id("RIG_")
-            drilling_elem = feature.find('.//drillingInformation')
+            rig_id = None
+            drilling_elem = self.find_element(feature, 'drillingInformation')
             if drilling_elem is not None:
-                rig_desc_elem = drilling_elem.find('.//rigDescription')
-                hammer_elem = drilling_elem.find('.//hammerType')
-                efficiency_elem = drilling_elem.find('.//hammerEfficiency')
-                
+                rig_id = self.generate_id("RIG_")
+                rig_desc_elem = self.find_element(drilling_elem, 'rigDescription')
+                hammer_elem = self.find_element(drilling_elem, 'hammerType')
+                efficiency_elem = self.find_element(drilling_elem, 'hammerEfficiency')
+
                 try:
-                    self.cur.execute('''INSERT OR IGNORE INTO "_Rig" 
-                                      ("_rigID", "_rigDescription", "hammerType", "hammerEfficiency") 
+                    self.cur.execute('''INSERT OR IGNORE INTO "_Rig"
+                                      ("_rigID", "_rigDescription", "hammerType", "hammerEfficiency")
                                       VALUES (?, ?, ?, ?)''',
-                                   (rig_id, self.safe_text(rig_desc_elem), 
+                                   (rig_id, self.safe_text(rig_desc_elem),
                                     self.safe_text(hammer_elem), self.safe_float(efficiency_elem)))
-                except sqlite3.Error:
-                    pass
+                except sqlite3.Error as e:
+                    print(f"  Warning: Could not create rig - {e}")
+                    rig_id = None
             
             # Get project ID (use first available)
             project_id = None
