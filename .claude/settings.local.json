@@ -22,7 +22,8 @@
       "Bash(rd:*)",
       "Bash(powershell:*)",
       "WebFetch(domain:github.com)",
-      "Bash(gh:*)"
+      "Bash(gh:*)",
+      "Bash(del example_DIGGS_imported.db)"
     ],
     "deny": []
   }

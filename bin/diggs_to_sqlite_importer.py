@@ -377,53 +377,58 @@ class DiggsToSQLiteImporter:
                 print(f"  Warning: Could not import borehole - {e}")
     
     def import_samples(self, root):
-        """Import Sample elements"""
-        # Use helper method for namespace-aware search
-        samples = self.findall_elements(root, 'Sample')
+        """Import Sample elements from SamplingActivity"""
+        # Parse SamplingActivity elements which contain depth information
+        sampling_activities = self.findall_elements(root, 'SamplingActivity')
 
-        print(f"Importing {len(samples)} samples...")
-        
-        for sample in samples:
-            gml_id = sample.get(f'{{{self.namespaces["gml"]}}}id')
+        print(f"Importing {len(sampling_activities)} samples from sampling activities...")
+
+        for activity in sampling_activities:
+            gml_id = activity.get(f'{{{self.namespaces["gml"]}}}id')
             if not gml_id:
-                gml_id = sample.get('gml:id')
-            
+                gml_id = activity.get('gml:id')
+
             if gml_id in self.imported_ids['samples']:
                 continue
-            
-            # Extract sample data
-            name_elem = self.find_element(sample, 'name', use_gml=True)
 
-            # Extract depth interval
-            depth_elem = self.find_element(sample, 'depthInterval')
+            # Extract sample name
+            name_elem = self.find_element(activity, 'name', use_gml=True)
+
+            # Extract depth interval from samplingLocation
             top_depth = None
             bottom_depth = None
+            location_elem = self.find_element(activity, 'samplingLocation')
+            if location_elem is not None:
+                linear_extent = self.find_element(location_elem, 'LinearExtent')
+                if linear_extent is None:
+                    linear_extent = self.find_element(location_elem, 'LinearExtent', use_gml=True)
 
-            if depth_elem is not None:
-                top_elem = self.find_element(depth_elem, 'topDepth')
-                bottom_elem = self.find_element(depth_elem, 'bottomDepth')
-                top_depth = self.safe_float(top_elem)
-                bottom_depth = self.safe_float(bottom_elem)
+                if linear_extent is not None:
+                    pos_list = self.find_element(linear_extent, 'posList', use_gml=True)
+                    if pos_list is not None and pos_list.text:
+                        coords = pos_list.text.strip().split()
+                        if len(coords) >= 2:
+                            top_depth = self.safe_float(type('obj', (), {'text': coords[0]})())
+                            bottom_depth = self.safe_float(type('obj', (), {'text': coords[1]})())
 
-            # Extract sampling method
-            method_elem = self.find_element(sample, 'samplingMethod')
+            # Extract sampling method reference
+            method_elem = self.find_element(activity, 'samplingMethod')
+            method_text = None
+            if method_elem is not None:
+                href = method_elem.get('{http://www.w3.org/1999/xlink}href')
+                if href:
+                    method_text = href.lstrip('#')
 
-            # Find associated hole ID from samplingActivityRef (samples link to activities, not directly to boreholes)
+            # Find associated hole ID from samplingFeatureRef
             hole_id = None
-            activity_ref = self.find_element(sample, 'samplingActivityRef')
-            if activity_ref is not None:
-                href = activity_ref.get('{http://www.w3.org/1999/xlink}href')
+            feature_ref = self.find_element(activity, 'samplingFeatureRef')
+            if feature_ref is not None:
+                href = feature_ref.get('{http://www.w3.org/1999/xlink}href')
                 if href and href.startswith('#'):
-                    # For now, just use first available hole
-                    # TODO: Parse sampling activities to link properly
-                    try:
-                        self.cur.execute('SELECT "_holeID" FROM "_HoleInfo" LIMIT 1')
-                        result = self.cur.fetchone()
-                        if result:
-                            hole_id = result[0]
-                    except sqlite3.Error:
-                        pass
-            
+                    borehole_gml_id = href.lstrip('#')
+                    # Look up the database ID using the GML ID mapping
+                    hole_id = self.gml_id_mapping['holes'].get(borehole_gml_id)
+
             # Create sample record
             sample_id = self.generate_id("SAMPLE_")
             try:
@@ -432,13 +437,12 @@ class DiggsToSQLiteImporter:
                                    "pos_bottomDepth", "sampleMethod")
                                   VALUES (?, ?, ?, ?, ?, ?)''',
                                (sample_id, hole_id, self.safe_text(name_elem),
-                                top_depth, bottom_depth, self.safe_text(method_elem)))
+                                top_depth, bottom_depth, method_text))
 
                 self.imported_ids['samples'].add(gml_id)
                 # Store the mapping from GML ID to database ID
                 self.gml_id_mapping['samples'][gml_id] = sample_id
-                print(f"  Imported sample: {self.safe_text(name_elem)}")
-                
+
             except sqlite3.Error as e:
                 print(f"  Warning: Could not import sample - {e}")
     
@@ -597,19 +601,25 @@ class DiggsToSQLiteImporter:
         try:
             # Get test location (depth)
             outcome = self.find_element(test_elem, 'outcome')
-            test_result = self.find_element(outcome, 'TestResult') if outcome else None
-            location_elem = self.find_element(test_result, 'location') if test_result else None
+            test_result = self.find_element(outcome, 'TestResult') if outcome is not None else None
+            location_elem = self.find_element(test_result, 'location') if test_result is not None else None
 
             top_depth = None
             bottom_depth = None
 
-            if location_elem:
-                pos_list = self.find_element(location_elem, 'posList', use_gml=True)
-                if pos_list and pos_list.text:
-                    coords = pos_list.text.strip().split()
-                    if len(coords) >= 2:
-                        top_depth = self.safe_float(type('obj', (), {'text': coords[0]})())
-                        bottom_depth = self.safe_float(type('obj', (), {'text': coords[1]})())
+            if location_elem is not None:
+                # LinearExtent can be in diggs or gml namespace
+                linear_extent = self.find_element(location_elem, 'LinearExtent')
+                if linear_extent is None:
+                    linear_extent = self.find_element(location_elem, 'LinearExtent', use_gml=True)
+
+                if linear_extent is not None:
+                    pos_list = self.find_element(linear_extent, 'posList', use_gml=True)
+                    if pos_list is not None and pos_list.text:
+                        coords = pos_list.text.strip().split()
+                        if len(coords) >= 2:
+                            top_depth = self.safe_float(type('obj', (), {'text': coords[0]})())
+                            bottom_depth = self.safe_float(type('obj', (), {'text': coords[1]})())
 
             # Get N-value from results
             n_value = None
@@ -674,19 +684,64 @@ class DiggsToSQLiteImporter:
             total_pen_elem = self.find_element(spt_elem, 'totalPenetration')
             total_penetration = self.safe_float(total_pen_elem)
 
-            # Insert SPT test - NOTE: SPT table uses _Sample_ID, not _holeID
-            # For now, we'll skip SPT import until we can properly link tests to samples
-            # Tests need to reference samples, but we need to determine which sample each test belongs to
+            # Get penetration distances for each drive set
+            penetrations = []
+            for ds in drive_sets:
+                drive_set_elem = self.find_element(ds, 'DriveSet')
+                if drive_set_elem is not None:
+                    pen_elem = self.find_element(drive_set_elem, 'penetration')
+                    if pen_elem is not None:
+                        pen = self.safe_float(pen_elem)
+                        if pen is not None:
+                            penetrations.append(pen)
+
+            # Find the sample that matches this test based on borehole and depth
+            sample_id = None
+            if hole_id and top_depth is not None:
+                try:
+                    # Find sample with matching borehole and overlapping depth range
+                    self.cur.execute('''
+                        SELECT "_Sample_ID" FROM "_Samples"
+                        WHERE "_holeID" = ?
+                        AND (
+                            (pos_topDepth <= ? AND pos_bottomDepth >= ?)
+                            OR (pos_topDepth <= ? AND pos_bottomDepth >= ?)
+                            OR (pos_topDepth >= ? AND pos_bottomDepth <= ?)
+                        )
+                        ORDER BY ABS((pos_topDepth + pos_bottomDepth)/2 - ?) LIMIT 1
+                    ''', (hole_id, top_depth, top_depth, bottom_depth, bottom_depth, top_depth, bottom_depth, top_depth))
+                    result = self.cur.fetchone()
+                    if result:
+                        sample_id = result[0]
+                except sqlite3.Error as e:
+                    if debug_first:
+                        print(f"    DEBUG: Error finding sample - {e}")
 
             if debug_first:
-                print(f"    DEBUG SPT: hole_id={hole_id}, blow_counts={blow_counts}, depth={top_depth}-{bottom_depth}, total_pen={total_penetration}")
-                print(f"    DEBUG: SPT import requires sample linkage - skipping for now")
+                print(f"    DEBUG SPT: hole_id={hole_id}, sample_id={sample_id}")
+                print(f"    DEBUG SPT: blow_counts={blow_counts}, penetrations={penetrations}")
+                print(f"    DEBUG SPT: depth={top_depth}-{bottom_depth}, total_pen={total_penetration}")
 
-            # TODO: Implement proper SPT import with sample linkage
-            # The database schema requires:
-            # - _Sample_ID (need to link test to sample)
-            # - blowCount_index1, blowCount_index2, blowCount_index3 (we have these)
-            # - penetration_index1, penetration_index2, penetration_index3 (need to extract)
+            # Insert SPT test if we have required data
+            if sample_id and len(blow_counts) >= 3:
+                try:
+                    self.cur.execute('''INSERT OR IGNORE INTO "_SPT"
+                                      ("_Sample_ID", "_Method_ID", "totalPenetration",
+                                       "blowCount_index1", "penetration_index1",
+                                       "blowCount_index2", "penetration_index2",
+                                       "blowCount_index3", "penetration_index3")
+                                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                                   (sample_id, None, total_penetration,
+                                    blow_counts[0], penetrations[0] if len(penetrations) > 0 else None,
+                                    blow_counts[1], penetrations[1] if len(penetrations) > 1 else None,
+                                    blow_counts[2], penetrations[2] if len(penetrations) > 2 else None))
+                    if debug_first:
+                        print(f"    DEBUG: SPT inserted successfully!")
+                    return True
+                except sqlite3.Error as e:
+                    if debug_first:
+                        print(f"    DEBUG: SPT insert failed - {e}")
+                    return False
 
             return False
 
